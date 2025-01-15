@@ -1,8 +1,10 @@
 from langchain.output_parsers import XMLOutputParser
-from typing import TypedDict, Sequence
+from typing import TypedDict, Sequence, Union
 from langchain_core.messages import BaseMessage, HumanMessage, SystemMessage, AIMessage
 from langgraph.graph import StateGraph
 from dotenv import load_dotenv, find_dotenv
+from langchain_community.chat_models import ChatOllama
+from langchain_anthropic import ChatAnthropic
 from src.utilities.print_formatters import print_formatted, print_formatted_content_planner
 from src.utilities.util_functions import check_file_contents, convert_images, get_joke, read_coderrules, list_directory_tree
 from src.utilities.langgraph_common_functions import after_ask_human_condition
@@ -112,24 +114,24 @@ def call_model_corrector(state):
 
 multiple_planers = False
 # workflow definition
-researcher_workflow = StateGraph(AgentState)
+planner_workflow = StateGraph(AgentState)
 
 if multiple_planers:
-    researcher_workflow.add_node("planers", call_planers)
+    planner_workflow.add_node("planers", call_planers)
 else:
-    researcher_workflow.add_node("planers", call_planer)
-researcher_workflow.add_node("agent", call_model_corrector)
-researcher_workflow.add_node("human", ask_human_planner)
-researcher_workflow.set_entry_point("planers")
+    planner_workflow.add_node("planers", call_planer)
+planner_workflow.add_node("agent", call_model_corrector)
+planner_workflow.add_node("human", ask_human_planner)
+planner_workflow.set_entry_point("planers")
 
-researcher_workflow.add_edge("planers", "human")
-researcher_workflow.add_edge("agent", "human")
-researcher_workflow.add_conditional_edges("human", after_ask_human_condition)
+planner_workflow.add_edge("planers", "human")
+planner_workflow.add_edge("agent", "human")
+planner_workflow.add_conditional_edges("human", after_ask_human_condition)
 
-researcher = researcher_workflow.compile()
+planner = planner_workflow.compile()
 
 
-def planning(task, text_files, image_paths, work_dir):
+def planning(task: str, text_files, image_paths, work_dir: str, documentation: Union[None, list[str]] = None):
     print_formatted("📈 Planner here! Create plan of changes with me!", color="light_blue")
     file_contents = check_file_contents(text_files, work_dir, line_numbers=False)
     images = convert_images(image_paths)
@@ -138,15 +140,10 @@ def planning(task, text_files, image_paths, work_dir):
     message_images = HumanMessage(content=images)
 
     inputs = {
-        "messages": [planer_system_message, message_without_imgs, message_images],
+        "messages": [planer_system_message, message_without_imgs, message_images, documentation],
         "voter_messages": [voter_system_message, message_without_imgs],
     }
-    planner_response = researcher.invoke(inputs, {"recursion_limit": 50})["messages"][-2]
+    planner_response = planner.invoke(inputs, {"recursion_limit": 50})["messages"][-2]
 
     return planner_response
 
-
-if __name__ == "__main__":
-    task = "Test task"
-    work_dir = os.getenv("WORK_DIR")
-    planning(task, work_dir=work_dir)

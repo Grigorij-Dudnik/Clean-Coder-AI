@@ -4,7 +4,8 @@ lint.ignore = ["D203", "D212", "TRY003", "PTH118", "RUF003", "A003", "INP001", "
           "PTH123", "TC003", "D417", "RUF001", "TC001", "DTZ003", "G004", "B008", "PLR0913",
           "FIX004",
           # lint issues related to prompts. Ignored for now.
-          D205, D207, D209, D213, D401, D400, D411, D413, D415, E501, W291, W293
+          "D205", "D207", "D209", "D213", "D401", "D400",
+          "D411", "D413", "D415", "E501", "W291", "W293"
           ]
 lint.fixable = ["ALL"]
 lint.unfixable = ["ERA001", "F841"]

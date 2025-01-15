@@ -1,16 +1,17 @@
-import sys
 import pathlib
-repo_directory = pathlib.Path(__file__).parent.parent.resolve()
-sys.path.append(str(repo_directory))
-from utils_for_tests import setup_work_dir, cleanup_work_dir
-from src.agents.executor_agent import Executor
-from dotenv import load_dotenv, find_dotenv
+import sys
 
+repo_directory = pathlib.Path(__file__).parents[2].resolve()
+sys.path.append(str(repo_directory))
+from dotenv import find_dotenv, load_dotenv
+
+from src.agents.executor_agent import Executor
+from tests.manual_tests.utils_for_tests import cleanup_work_dir, setup_work_dir
 
 load_dotenv(find_dotenv())
 
-
-setup_work_dir("executor_scenario_1_files")
+folder_with_project_files = str(repo_directory.joinpath("tests", "manual_tests", "projects_files", "executor_scenario_1_files"))
+setup_work_dir(folder_with_project_files)
 executor = Executor({"main.py"}, "sandbox_work_dir")
 
 task = "Create fastapi app with few endpoints."

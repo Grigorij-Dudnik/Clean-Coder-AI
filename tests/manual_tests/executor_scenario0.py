@@ -1,9 +1,10 @@
+import pathlib
+import sys
+
+repo_directory = pathlib.Path(__file__).parents[2].resolve()
+sys.path.append(str(repo_directory))
 from src.agents.executor_agent import Executor
-import shutil
-
-
-def cleanup_work_dir():
-    shutil.rmtree("sandbox_work_dir")
+from tests.manual_tests.utils_for_tests import cleanup_work_dir
 
 executor = Executor(set(), "sandbox_work_dir")
 

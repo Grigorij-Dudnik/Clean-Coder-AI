@@ -6,7 +6,7 @@ __pycache__/
 env/
 venv/
 .clean_coder/
-tests/manual_tests/sandbox_work_dir/
+*sandbox_work_dir/
 Pipfile.lock
 Pipfile
 .coverage

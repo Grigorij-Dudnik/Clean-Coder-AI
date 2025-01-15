@@ -100,7 +100,7 @@ class Researcher():
     # just functions
     def research_task(self, task):
         print_formatted("Researcher starting its work", color="green")
-        print_formatted("👋 Hey! I'm looking for a files on which we will work on together!", color="light_blue")
+        print_formatted("👋 Hey! I'm looking for files on which we will work on together!", color="light_blue")
 
         system_message = system_prompt_template.format(task=task, project_rules=read_coderrules())
         inputs = {
