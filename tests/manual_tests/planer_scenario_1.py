@@ -11,11 +11,12 @@ from tests.manual_tests.utils_for_tests import cleanup_work_dir, get_filenames_i
 
 load_dotenv(find_dotenv())
 
-folder_with_project_files = str(repo_directory.joinpath("tests", "manual_tests", "projects_files", "planner_scenario_1_files"))
-setup_work_dir(folder_with_project_files)
+folder_with_project_files = repo_directory.joinpath("tests", "manual_tests", "projects_files", "planner_scenario_1_files")
+tmp_folder =  pathlib.Path(__file__).parent.resolve().joinpath("sandbox_work_dir")
+setup_work_dir(manual_tests_folder=tmp_folder, test_files_dir=folder_with_project_files)
 
 task = "Make form wider, with green background. Improve styling."
-files = get_filenames_in_folder(folder_with_project_files)
+files = get_filenames_in_folder(manual_tests_folder=tmp_folder)
 
-planning(task, files, image_paths={},work_dir="sandbox_work_dir")
-cleanup_work_dir()
+planning(task, files, image_paths={},work_dir=str(tmp_folder))
+cleanup_work_dir(manual_tests_folder=tmp_folder)

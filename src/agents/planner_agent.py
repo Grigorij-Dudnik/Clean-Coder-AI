@@ -73,7 +73,7 @@ planner_workflow.add_conditional_edges("agent", after_ask_human_condition)
 planner = planner_workflow.compile()
 
 
-def planning(task, text_files, image_paths, work_dir, documentation, dir_tree=None, coderrules=None):
+def planning(task, text_files, image_paths, work_dir, documentation=None, dir_tree=None, coderrules=None):
     if not dir_tree:
         dir_tree = list_directory_tree(work_dir)
     if not coderrules:
