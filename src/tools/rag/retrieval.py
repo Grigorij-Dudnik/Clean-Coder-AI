@@ -1,19 +1,26 @@
+"""Functions to retrieve the most relevant documents from an indexed RAG database."""
 import os
-import cohere
-import chromadb
 from pathlib import Path
-from dotenv import load_dotenv, find_dotenv
 
+import chromadb
+import cohere
+from dotenv import find_dotenv, load_dotenv
+
+from src.utilities.exceptions import MissingEnvironmentVariableError
 
 load_dotenv(find_dotenv())
 work_dir = os.getenv("WORK_DIR")
+if not work_dir:
+    msg = "WORK_DIR variable not provided. Please add WORK_DIR to .env file"
+    raise MissingEnvironmentVariableError(msg)
 cohere_key = os.getenv("COHERE_API_KEY")
 if cohere_key:
     cohere_client = cohere.Client(cohere_key)
 collection_name = f"clean_coder_{Path(work_dir).name}_file_descriptions"
 
 
-def get_collection():
+def get_collection() -> bool | chromadb.PersistentClient:
+    """Check if chroma database is available in WORK_DIR."""
     if cohere_key:
         chroma_client = chromadb.PersistentClient(path=os.getenv('WORK_DIR') + '/.clean_coder/chroma_base')
         try:
@@ -28,7 +35,8 @@ def vdb_available():
     return True if get_collection() else False
 
 
-def retrieve(question):
+def retrieve(question: str) -> str:
+    """Identifies the most relevant files that help answer a question."""
     # collection should be initialized once, in the class init
     collection = get_collection()
     retrieval = collection.query(query_texts=[question], n_results=8)
