@@ -3,6 +3,7 @@ import yaml
 import sass
 from lxml import etree
 import re
+import bleach
 from src.utilities.print_formatters import print_formatted
 
 
@@ -145,10 +146,7 @@ def parse_vue_basic(content):
     if template_part_response != "Valid syntax":
         return template_part_response
 
-    try:
-        script = re.search(r'<script[^>]*>(.*?)</script>', content, re.DOTALL).group(1)
-    except AttributeError:
-        return "Script part has no valid open/closing tags."
+    script = bleach.clean(content, tags=[], strip=True)
     script_part_response = check_bracket_balance(script)
     if script_part_response != "Valid syntax":
         return script_part_response
