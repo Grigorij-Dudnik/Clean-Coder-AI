@@ -31,3 +31,5 @@ ruff==0.8.2
 httpx==0.27.2
 questionary==2.1.0
 pathspec==0.12.1
+crawl4ai==0.3.744
+setuptools==75.8.0
