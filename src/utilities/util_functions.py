@@ -3,13 +3,16 @@ import os
 import xml.etree.ElementTree as ET
 import base64
 import requests
-from src.utilities.start_work_functions import file_folder_ignored, Work
+import subprocess
+import venv
+from src.utilities.start_work_functions import file_folder_ignored, CoderIgnore, Work
 from src.utilities.print_formatters import print_formatted
 from dotenv import load_dotenv, find_dotenv
 from todoist_api_python.api import TodoistAPI
 from langchain_core.messages import HumanMessage, ToolMessage
 import click
-
+import datetime
+from langchain_core.messages import BaseMessage
 
 load_dotenv(find_dotenv())
 work_dir = os.getenv("WORK_DIR")
@@ -19,7 +22,6 @@ PROJECT_ID = os.getenv('TODOIST_PROJECT_ID')
 
 
 TOOL_NOT_EXECUTED_WORD = "Tool not been executed. "
-WRONG_TOOL_CALL_WORD = "Wrong tool call. "
 
 storyfile_template = """<This is the story of your project for a frontend feedback agent. Modify it according to commentaries provided in <> brackets.>
 
@@ -46,7 +48,7 @@ For being logged in as admin user, use username="frontend.feedback@admin", passw
 
 
 def check_file_contents(files, work_dir, line_numbers=True):
-    file_contents = f"Files shown: {files}\n\n"
+    file_contents = str()
     for file_name in files:
         file_content = watch_file(file_name, work_dir, line_numbers)
         file_contents += file_content + "\n\n###\n\n"
@@ -55,7 +57,7 @@ def check_file_contents(files, work_dir, line_numbers=True):
 
 
 def watch_file(filename, work_dir, line_numbers=True):
-    if file_folder_ignored(filename):
+    if file_folder_ignored(filename, CoderIgnore.get_forbidden()):
         return "You are not allowed to work with this file."
     try:
         with open(join_paths(work_dir, filename), 'r', encoding='utf-8') as file:
@@ -63,7 +65,7 @@ def watch_file(filename, work_dir, line_numbers=True):
     except FileNotFoundError:
         return "File not exists."
     if line_numbers:
-        formatted_lines = [f"{i + 1}|{line[:-1]} |{i+1}\n" for i, line in enumerate(lines)]
+        formatted_lines = [f"{i + 1}|{line[:-1]}\n" for i, line in enumerate(lines)]
     else:
         formatted_lines = [f"{line[:-1]}\n" for line in lines]
     file_content = "".join(formatted_lines)
@@ -115,7 +117,6 @@ def convert_images(image_paths):
     images = []
     for image_path in image_paths:
         if not os.path.exists(join_paths(work_dir, image_path)):
-            print_formatted(f"Image not exists: {image_path}", color="yellow")
             continue
         images.extend([
                  {"type": "text", "text": f"I###\n{image_path}"},
@@ -145,8 +146,8 @@ def list_directory_tree(work_dir):
     tree = []
     for root, dirs, files in os.walk(work_dir):
         # Filter out forbidden directories and files
-        dirs[:] = [d for d in dirs if not file_folder_ignored(d)]
-        files = [f for f in files if not file_folder_ignored(f)]
+        dirs[:] = [d for d in dirs if not file_folder_ignored(d, CoderIgnore.get_forbidden())]
+        files = [f for f in files if not file_folder_ignored(f, CoderIgnore.get_forbidden())]
         rel_path = os.path.relpath(root, work_dir)
         depth = rel_path.count(os.sep)
         indent = "│ " * depth
@@ -198,9 +199,9 @@ def exchange_file_contents(state, files, work_dir):
 
 
 def bad_tool_call_looped(state):
-    last_tool_messages = [m for m in state["messages"] if m.type == "tool"][-4:]
+    last_human_messages = [m for m in state["messages"] if m.type == "human"][-4:]
     tool_not_executed_msgs = [
-        m for m in last_tool_messages if isinstance(m.content, str) and m.content.startswith(WRONG_TOOL_CALL_WORD)
+        m for m in last_human_messages if isinstance(m.content, str) and m.content.startswith(TOOL_NOT_EXECUTED_WORD)
     ]
     if len(tool_not_executed_msgs) == 4:
         print_formatted("Seems like AI been looped. Please suggest it how to introduce change correctly:", color="yellow")
@@ -225,7 +226,7 @@ def read_coderrules():
 
 
 def create_coderrules(coderrules_path):
-    print_formatted("(Optional) Describe your project rules and structure to give AI more context about it. Learn how to do it: https://clean-coder.dev/features/coderrules/. ", color="light_blue")
+    print_formatted("(Optional) Describe your project rules and structure to give AI more context. Check docs to learn how to do it https://clean-coder.dev/features/coderrules/. ", color="light_blue")
     rules = input()
     with open(coderrules_path, 'w', encoding='utf-8') as file:
         file.write(rules)
@@ -233,5 +234,67 @@ def create_coderrules(coderrules_path):
     return rules
 
 
-if __name__ == '__main__':
-    print(list_directory_tree(Work.dir()))
+def setup_virtual_env(work_dir):
+    work_dir = os.path.abspath(work_dir)
+    env_path = os.path.join(work_dir, "env")
+    if not os.path.exists(env_path):
+        import venv
+        venv.create(env_path, with_pip=True)
+        subprocess.run([os.path.join(env_path, "bin", "pip"), "install", "-U", "pip"], check=True)
+    return os.path.join(env_path, "bin", "python")
+
+def run_script_in_env(script_path, work_dir):
+    work_dir = os.path.abspath(work_dir)
+    python_path = setup_virtual_env(work_dir)
+    req_file = os.path.join(work_dir, "requirements.txt")
+    if os.path.exists(req_file):
+        pip_path = os.path.join(os.path.dirname(python_path), "pip")
+        subprocess.run([pip_path, "install", "-r", req_file], check=True)
+    try:
+        result = subprocess.run(
+            [python_path, script_path],
+            capture_output=True,
+            text=True,
+            check=True
+        )
+        return result.stdout, result.stderr
+    except subprocess.CalledProcessError as e:
+        return e.stdout, e.stderr
+    
+def format_log_message(work_dir, script_path, is_error=False, stdout="", stderr="", error_msg=""):
+    """Format log message content"""
+    message = "\n[SCRIPT EXECUTION {}]\n".format("ERROR" if is_error else "INFO")
+    message += f"Script: {script_path}\n"
+    message += f"Timestamp: {datetime.datetime.now()}\n"
+    
+    if is_error:
+        message += f"Error: {error_msg}\n"
+        message += f"STDOUT:\n{stdout}\n"
+        message += f"STDERR:\n{stderr}\n"
+    else:
+        message += f"Executed in env: {work_dir}/env\n"
+        message += f"STDOUT:\n{stdout}\n"
+        message += f"STDERR:\n{stderr}\n"
+    
+    return message
+
+def write_and_append_log(state: dict, message: str, logs_file: str) -> dict:
+    """Write log to file and append to state"""
+    with open(logs_file, "w") as log_file:
+        log_file.write(message)
+    
+    state["messages"].append(
+        HumanMessage(content=message)
+    )
+    return state
+
+def get_executed_filename(state: dict) -> str:
+    """Get filename of executed script from messages"""
+    for message in state.get("messages", []):
+        if isinstance(message.content, str) and "File contents:" in message.content:
+            header_line = message.content.splitlines()[0]
+            if header_line.startswith("File contents:"):
+                parts = header_line.split("File contents:")[-1].split(":")
+                filename = parts[0].strip()
+                return filename
+    return ""
