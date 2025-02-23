@@ -1,5 +1,6 @@
 import os
 import base64
+import mimetypes
 import requests
 import subprocess
 import venv
@@ -61,20 +62,30 @@ def check_file_contents(files, work_dir, line_numbers=True):
 
 
 def watch_file(filename, work_dir, line_numbers=True):
-    if file_folder_ignored(filename, CoderIgnore.get_forbidden()):
+    if file_folder_ignored(filename):
         return "You are not allowed to work with this file."
+    
+    file_path = join_paths(work_dir, filename)
+    mime_type, _ = mimetypes.guess_type(file_path)
+    
+    # Check if the file is not a text file
+    if mime_type and not mime_type.startswith('text'):
+        return f"File {filename} is a binary file and cannot be read as text."
+    
     try:
         with open(join_paths(work_dir, filename), "r", encoding="utf-8") as file:
             lines = file.readlines()
     except FileNotFoundError:
-        return "File not exists."
+        return "File does not exist."
+    except UnicodeDecodeError:
+        return f"File {filename} could not be decoded as UTF-8. It may be a binary file."
+    
     if line_numbers:
         formatted_lines = [f"{i + 1}|{line.rstrip()} |{i+1}\n" for i, line in enumerate(lines)]
     else:
         formatted_lines = [f"{line.rstrip()}\n" for line in lines]
     file_content = "".join(formatted_lines)
-    file_content = filename + ":\n\n" + file_content
-
+    file_content = f"{filename}:\n\n{file_content}"
     return file_content
 
 
