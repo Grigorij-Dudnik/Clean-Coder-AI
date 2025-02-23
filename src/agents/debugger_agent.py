@@ -70,8 +70,6 @@ class Debugger():
         debugger_workflow.add_node("frontend_screenshots", self.frontend_screenshots)
         debugger_workflow.add_node("human_help", agent_looped_human_help)
         debugger_workflow.add_node("human_end_process_confirmation", ask_human)
-        debugger_workflow.add_node("run_script", self.logs_from_running_script)
-        debugger_workflow.add_edge("run_script", "agent")
 
         debugger_workflow.set_entry_point("agent")
 
@@ -98,10 +96,8 @@ class Debugger():
 
         for tool_call in last_ai_message.tool_calls:
             if tool_call["name"] == "create_file_with_code":
-                filename = tool_call["args"]["filename"]
-                self.files.add(filename)
-                log_message = f"File {filename} created."
-                state = write_and_append_log(state, log_message, os.path.join(self.work_dir, "logs.txt"))
+                self.files.add(tool_call["args"]["filename"])
+                state = self.logs_from_running_script(state)
 
         state = exchange_file_contents(state, self.files, self.work_dir)
         return state
@@ -119,30 +115,17 @@ class Debugger():
         script_path = os.path.join(self.work_dir, file_name)
         logs = os.path.join(self.work_dir, "logs.txt")
         if not os.path.exists(script_path):
-            message = format_log_message(
-                work_dir=self.work_dir,
-                script_path=script_path,
+            message = format_log_message(self.work_dir, script_path,
                 is_error=True,
                 error_msg="File not found",
             )
             return write_and_append_log(state, message, logs)
         try:
             stdout, stderr = run_script_in_env(script_path, self.work_dir)
-            message = format_log_message(
-                work_dir=self.work_dir,
-                script_path=script_path,
-                is_error=False,
-                stdout=stdout,
-                stderr=stderr,
+            message = format_log_message(self.work_dir, script_path, False, stdout, stderr,
             )
         except subprocess.CalledProcessError as e:
-            message = format_log_message(
-                work_dir=self.work_dir,
-                script_path=script_path,
-                is_error=True,
-                error_msg=f"Script execution failed: {e.stderr}",
-                stdout=e.output,
-                stderr=e.stderr,
+            message = format_log_message(self.work_dir, script_path, True, f"Script execution failed: {e.stderr}", e.output, e.stderr,
             )
         return write_and_append_log(state, message, logs)
 
@@ -183,8 +166,6 @@ class Debugger():
                 return "frontend_screenshots"
             else:
                 return "human_end_process_confirmation"
-        elif hasattr(last_message, "tool_calls") and last_message.tool_calls[0]["name"] == "create_file_with_code":
-            return "run_script"
         else:
             return "agent"
 
