@@ -3,7 +3,10 @@ import subprocess
 from unittest.mock import Mock, mock_open, patch
 
 import pytest
-from src.utilities.script_execution_utils import format_log_message, run_script_in_env, logs_from_running_script, create_script_execution_env
+from langchain_core.messages import HumanMessage
+
+from src.agents.debugger_agent import Debugger
+from src.utilities.util_functions import run_script_in_env, write_and_append_log
 
 
 @pytest.fixture
@@ -12,7 +15,7 @@ def temp_work_dir():
     return "/tmp/test_work"
 
 
-def test_run_script_success(temp_work_dir):
+def test_run_script_success(debugger_agent):
     with (
         patch("subprocess.run") as mock_run,
         patch("os.path.exists") as mock_exists,
@@ -34,12 +37,8 @@ def test_run_script_success(temp_work_dir):
         )
 
 
-def test_run_script_error(temp_work_dir):
-    with (
-        patch("subprocess.run") as mock_run,
-        patch("src.utilities.script_execution_utils.create_script_execution_env") as mock_create_env,
-    ):
-        mock_create_env.return_value = os.path.join(temp_work_dir, "env/bin/python")
+def test_run_script_error(debugger_agent):
+    with patch("subprocess.run") as mock_run:
         mock_run.side_effect = subprocess.CalledProcessError(
             returncode=1,
             cmd=[],
@@ -53,7 +52,7 @@ def test_run_script_error(temp_work_dir):
         assert "Error details" in stderr
 
 
-def test_logs_from_running_script_file_not_found(temp_work_dir):
+def test_logs_from_running_script_file_not_found(debugger_agent):
     with (
         patch("src.utilities.script_execution_utils.run_script_in_env") as mock_run_script,
     ):
@@ -63,23 +62,54 @@ def test_logs_from_running_script_file_not_found(temp_work_dir):
         assert "No such file" in result
 
 
-def test_logs_from_running_script_success(temp_work_dir):
+def test_logs_from_running_script_success(debugger_agent):
     with (
         patch("src.utilities.script_execution_utils.run_script_in_env") as mock_run_script,
     ):
         mock_run_script.return_value = ("Success output", "")
+        mock_subprocess_run.return_value = Mock(
+            spec=subprocess.CompletedProcess,
+            returncode=0,
+        )
+        mock_exists.return_value = True
+        result_state = debugger_agent.logs_from_running_script({"messages": []})
 
-        result = logs_from_running_script(temp_work_dir, "test_script.py")
-        assert "Success output" in result
-        assert "[SCRIPT EXECUTION INFO]" in result
-        mock_run_script.assert_called_once_with(
-            os.path.join(temp_work_dir, "test_script.py"), 
-            temp_work_dir, 
-            silent_setup=True
+        assert "existing_script.py" in result_state["messages"][-1].content
+        assert "Success output" in result_state["messages"][-1].content
+
+
+def test_write_and_append_log():
+    test_message = "Test log message"
+    test_logs_file = "/tmp/test_work/logs.txt"
+
+    with patch("builtins.open", mock_open()) as mocked_file:
+        initial_state = {"messages": []}
+        new_state = write_and_append_log(initial_state, test_message, test_logs_file)
+
+        mocked_file.assert_called_once_with(test_logs_file, "w")
+        mocked_file().write.assert_called_once_with(test_message)
+        assert len(new_state["messages"]) == 1
+        assert isinstance(new_state["messages"][0], HumanMessage)
+        assert test_message in new_state["messages"][0].content
+
+
+def test_logs_from_running_script_empty_filename(debugger_agent):
+    with (
+        patch("src.agents.debugger_agent.get_executed_filename") as mock_get_filename,
+        patch("os.path.exists") as mock_exists,
+        patch("src.agents.debugger_agent.run_script_in_env") as mock_run_script,
+    ):
+        mock_get_filename.return_value = ""
+        mock_exists.return_value = True
+        mock_run_script.side_effect = subprocess.CalledProcessError(
+            returncode=1, cmd=[], output="", stderr="Error: Not a valid script",
         )
 
+        result_state = debugger_agent.logs_from_running_script({"messages": []})
+        assert "Error: Not a valid script" in result_state["messages"][-1].content
 
-def test_logs_from_running_script_run_script_error(temp_work_dir):
+
+def test_logs_from_running_script_run_script_error(debugger_agent):
     with (
         patch("src.utilities.script_execution_utils.run_script_in_env") as mock_run_script,
     ):
@@ -95,7 +125,7 @@ def test_logs_from_running_script_run_script_error(temp_work_dir):
         assert "Error details" in result
 
 
-def test_run_script_in_env_with_requirements(temp_work_dir):
+def test_run_script_in_env_with_requirements(debugger_agent):
     with (
         patch("subprocess.run") as mock_run,
         patch("os.path.exists") as mock_exists,
@@ -133,7 +163,9 @@ def test_run_script_in_env_with_requirements(temp_work_dir):
         )
 
 
-def test_format_log_message():
+def test_format_log_message(debugger_agent):
+    from src.utilities.util_functions import format_log_message
+
     message = format_log_message(
         is_error=False,
         stdout="Success output",

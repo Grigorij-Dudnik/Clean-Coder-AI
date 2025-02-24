@@ -139,10 +139,7 @@ class Debugger:
         script_path = os.path.join(self.work_dir, file_name)
         logs = os.path.join(self.work_dir, "logs.txt")
         if not os.path.exists(script_path):
-            message = format_log_message(self.work_dir, script_path,
-                is_error=True,
-                error_msg="File not found",
-            )
+            message = format_log_message(self.work_dir, script_path, is_error=True, error_msg="File not found")
             return write_and_append_log(state, message, logs)
         try:
             stdout, stderr = run_script_in_env(script_path, self.work_dir)
@@ -213,6 +210,7 @@ class Debugger:
         self.debugger.invoke(inputs, {"recursion_limit": 150})
 
         return self.files
+
 
 
 def prepare_tools(work_dir):
