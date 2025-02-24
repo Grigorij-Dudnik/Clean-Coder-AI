@@ -1,7 +1,12 @@
 import os
+import subprocess
 from src.tools.tools_coder_pipeline import (
-    ask_human_tool, prepare_list_dir_tool, prepare_see_file_tool,
-    prepare_create_file_tool, prepare_replace_code_tool, prepare_insert_code_tool
+    ask_human_tool,
+    prepare_list_dir_tool,
+    prepare_see_file_tool,
+    prepare_create_file_tool,
+    prepare_replace_code_tool,
+    prepare_insert_code_tool,
 )
 from typing import TypedDict, Sequence
 from langchain_core.messages import BaseMessage, HumanMessage, SystemMessage, ToolMessage
@@ -16,10 +21,20 @@ from src.utilities.util_functions import (
     bad_tool_call_looped,
     read_coderrules,
     convert_images,
+    run_script_in_env,
+    get_executed_filename,
+    format_log_message,
+    write_and_append_log,
 )
 from src.utilities.llms import init_llms
 from src.utilities.langgraph_common_functions import (
-    call_model, call_tool, ask_human, after_ask_human_condition, multiple_tools_msg, no_tools_msg, agent_looped_human_help,
+    call_model,
+    call_tool,
+    ask_human,
+    after_ask_human_condition,
+    multiple_tools_msg,
+    no_tools_msg,
+    agent_looped_human_help,
 )
 from src.agents.frontend_feedback import execute_screenshot_codes
 
@@ -31,10 +46,11 @@ frontend_url = os.getenv("FRONTEND_URL")
 @tool
 def final_response_debugger(test_instruction):
     """Call that tool when all changes are implemented to tell the job is done.
-tool input:
-:param test_instruction: write detailed instruction for human what actions he need to do in order to check if
-implemented changes work correctly."""
+    tool input:
+    :param test_instruction: write detailed instruction for human what actions he need to do in order to check if
+    implemented changes work correctly."""
     pass
+
 
 class AgentState(TypedDict):
     messages: Sequence[BaseMessage]
@@ -46,7 +62,7 @@ with open(f"{parent_dir}/prompts/debugger_system.prompt", "r") as f:
     system_prompt_template = f.read()
 
 
-class Debugger():
+class Debugger:
     def __init__(self, files, work_dir, human_feedback, image_paths, playwright_code=None):
         self.work_dir = work_dir
         self.tools = prepare_tools(work_dir)
@@ -58,10 +74,8 @@ class Debugger():
         self.images = convert_images(image_paths)
         self.human_feedback = human_feedback
         self.playwright_code = playwright_code
-
         # workflow definition
         debugger_workflow = StateGraph(AgentState)
-
         debugger_workflow.add_node("agent", self.call_model_debugger)
         debugger_workflow.add_node("check_log", self.check_log)
         debugger_workflow.add_node("frontend_screenshots", self.frontend_screenshots)
@@ -79,10 +93,9 @@ class Debugger():
         self.debugger = debugger_workflow.compile()
 
     # node functions
-    def call_model_debugger(self, state):
+    def call_model_debugger(self, state: dict) -> dict:
         state = call_model(state, self.llms)
         state = call_tool(state, self.tools)
-
         messages = [msg for msg in state["messages"] if msg.type == "ai"]
         last_ai_message = messages[-1]
         if len(last_ai_message.tool_calls) > 1:
@@ -95,16 +108,34 @@ class Debugger():
         for tool_call in last_ai_message.tool_calls:
             if tool_call["name"] == "create_file_with_code":
                 self.files.add(tool_call["args"]["filename"])
+                state = self.logs_from_running_script(state)
+
         state = exchange_file_contents(state, self.files, self.work_dir)
         return state
 
-    def check_log(self, state):
-        # Add logs
+    def check_log(self, state: dict) -> dict:
+        """Add server logs."""
         logs = check_application_logs()
         log_message = HumanMessage(content="Logs:\n" + logs)
         state["messages"].append(log_message)
-
         return state
+
+    def logs_from_running_script(self, state: dict) -> dict:
+        """Get logs from running script execution."""
+        file_name = get_executed_filename(state)
+        script_path = os.path.join(self.work_dir, file_name)
+        logs = os.path.join(self.work_dir, "logs.txt")
+        if not os.path.exists(script_path):
+            message = format_log_message(self.work_dir, script_path, is_error=True, error_msg="File not found")
+            return write_and_append_log(state, message, logs)
+        try:
+            stdout, stderr = run_script_in_env(script_path, self.work_dir)
+            message = format_log_message(self.work_dir, script_path, False, stdout, stderr,
+            )
+        except subprocess.CalledProcessError as e:
+            message = format_log_message(self.work_dir, script_path, True, f"Script execution failed: {e.stderr}", e.output, e.stderr,
+            )
+        return write_and_append_log(state, message, logs)
 
     def frontend_screenshots(self, state):
         print_formatted("Making screenshots, please wait a while...", color="light_blue")
@@ -134,9 +165,12 @@ class Debugger():
 
     def after_check_log_condition(self, state):
         last_message = state["messages"][-1]
-
-        if last_message.content.endswith("Logs are correct"):
-            if self.playwright_code:
+        if bad_tool_call_looped(state):
+            return "human_help"
+        elif hasattr(last_message, "tool_calls") and last_message.tool_calls[0]["name"] == "final_response_debugger":
+            if log_file_path:
+                return "check_log"
+            elif self.playwright_code:
                 return "frontend_screenshots"
             else:
                 return "human_end_process_confirmation"
@@ -160,6 +194,7 @@ class Debugger():
             screenshot_msg = execute_screenshot_codes(self.playwright_code)
             inputs["messages"].append(screenshot_msg)
         self.debugger.invoke(inputs, {"recursion_limit": 150})
+
 
 
 def prepare_tools(work_dir):
