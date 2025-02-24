@@ -1,8 +1,12 @@
 import os
 import subprocess
 from src.tools.tools_coder_pipeline import (
-    ask_human_tool, prepare_list_dir_tool, prepare_see_file_tool,
-    prepare_create_file_tool, prepare_replace_code_tool, prepare_insert_code_tool
+    ask_human_tool,
+    prepare_list_dir_tool,
+    prepare_see_file_tool,
+    prepare_create_file_tool,
+    prepare_replace_code_tool,
+    prepare_insert_code_tool,
 )
 from typing import TypedDict, Sequence
 from langchain_core.messages import BaseMessage, HumanMessage, SystemMessage, ToolMessage
@@ -24,7 +28,13 @@ from src.utilities.util_functions import (
 )
 from src.utilities.llms import init_llms_medium_intelligence
 from src.utilities.langgraph_common_functions import (
-    call_model, call_tool, ask_human, after_ask_human_condition, multiple_tools_msg, no_tools_msg, agent_looped_human_help,
+    call_model,
+    call_tool,
+    ask_human,
+    after_ask_human_condition,
+    multiple_tools_msg,
+    no_tools_msg,
+    agent_looped_human_help,
 )
 from src.agents.frontend_feedback import execute_screenshot_codes
 
@@ -36,10 +46,11 @@ frontend_url = os.getenv("FRONTEND_URL")
 @tool
 def final_response_debugger(test_instruction):
     """Call that tool when all changes are implemented to tell the job is done.
-tool input:
-:param test_instruction: write detailed instruction for human what actions he need to do in order to check if
-implemented changes work correctly."""
+    tool input:
+    :param test_instruction: write detailed instruction for human what actions he need to do in order to check if
+    implemented changes work correctly."""
     pass
+
 
 class AgentState(TypedDict):
     messages: Sequence[BaseMessage]
@@ -51,7 +62,7 @@ with open(f"{parent_dir}/prompts/debugger_system.prompt", "r") as f:
     system_prompt_template = f.read()
 
 
-class Debugger():
+class Debugger:
     def __init__(self, files, work_dir, human_feedback, image_paths, playwright_code=None):
         self.work_dir = work_dir
         self.tools = prepare_tools(work_dir)
@@ -103,7 +114,7 @@ class Debugger():
         return state
 
     def check_log(self, state: dict) -> dict:
-        """Server logs."""
+        """Add server logs."""
         logs = check_application_logs()
         log_message = HumanMessage(content="Logs:\n" + logs)
         state["messages"].append(log_message)
@@ -115,10 +126,7 @@ class Debugger():
         script_path = os.path.join(self.work_dir, file_name)
         logs = os.path.join(self.work_dir, "logs.txt")
         if not os.path.exists(script_path):
-            message = format_log_message(self.work_dir, script_path,
-                is_error=True,
-                error_msg="File not found",
-            )
+            message = format_log_message(self.work_dir, script_path, is_error=True, error_msg="File not found")
             return write_and_append_log(state, message, logs)
         try:
             stdout, stderr = run_script_in_env(script_path, self.work_dir)
@@ -177,14 +185,16 @@ class Debugger():
             self.system_message,
             HumanMessage(content=f"Task: {task}\n\n######\n\nPlan which developer implemented already:\n\n{plan}"),
             HumanMessage(content=f"File contents: {file_contents}", contains_file_contents=True),
-            HumanMessage(content=self.images),
             HumanMessage(content=f"Human feedback: {self.human_feedback}"),
         ]}
+        if self.images:
+            inputs["messages"].append(HumanMessage(content=self.images))
         if self.playwright_code:
             print_formatted("Making screenshots, please wait a while...", color="light_blue")
             screenshot_msg = execute_screenshot_codes(self.playwright_code)
             inputs["messages"].append(screenshot_msg)
         self.debugger.invoke(inputs, {"recursion_limit": 150})
+
 
 
 def prepare_tools(work_dir):

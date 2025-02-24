@@ -6,7 +6,7 @@ import pytest
 from langchain_core.messages import HumanMessage
 
 from src.agents.debugger_agent import Debugger
-from src.utilities.util_functions import run_script_in_env, write_and_append_log
+from src.utilities.util_functions import format_log_message, run_script_in_env, write_and_append_log
 
 
 @pytest.fixture
@@ -18,7 +18,7 @@ def debugger_agent(monkeypatch):
     return agent
 
 
-def test_run_script_success(debugger_agent):
+def test_run_script_success(debugger_agent: Debugger):
     with (
         patch("subprocess.run") as mock_run,
         patch("os.path.exists") as mock_exists,
@@ -40,7 +40,7 @@ def test_run_script_success(debugger_agent):
         )
 
 
-def test_run_script_error(debugger_agent):
+def test_run_script_error(debugger_agent: Debugger):
     with patch("subprocess.run") as mock_run:
         mock_run.side_effect = subprocess.CalledProcessError(
             returncode=1, cmd=[], output="Error output", stderr="Error details",
@@ -52,7 +52,7 @@ def test_run_script_error(debugger_agent):
         assert "Error details" in stderr
 
 
-def test_logs_from_running_script_file_not_found(debugger_agent):
+def test_logs_from_running_script_file_not_found(debugger_agent: Debugger):
     with (
         patch("src.agents.debugger_agent.get_executed_filename") as mock_get_filename,
         patch("os.path.exists") as mock_exists,
@@ -63,7 +63,7 @@ def test_logs_from_running_script_file_not_found(debugger_agent):
         assert "File not found" in result_state["messages"][-1].content
 
 
-def test_logs_from_running_script_success(debugger_agent):
+def test_logs_from_running_script_success(debugger_agent: Debugger):
     with (
         patch("src.agents.debugger_agent.get_executed_filename") as mock_get_filename,
         patch("src.agents.debugger_agent.run_script_in_env") as mock_run_script,
@@ -98,7 +98,7 @@ def test_write_and_append_log():
         assert test_message in new_state["messages"][0].content
 
 
-def test_logs_from_running_script_empty_filename(debugger_agent):
+def test_logs_from_running_script_empty_filename(debugger_agent: Debugger):
     with (
         patch("src.agents.debugger_agent.get_executed_filename") as mock_get_filename,
         patch("os.path.exists") as mock_exists,
@@ -114,7 +114,7 @@ def test_logs_from_running_script_empty_filename(debugger_agent):
         assert "Error: Not a valid script" in result_state["messages"][-1].content
 
 
-def test_logs_from_running_script_run_script_error(debugger_agent):
+def test_logs_from_running_script_run_script_error(debugger_agent: Debugger):
     with (
         patch("src.agents.debugger_agent.get_executed_filename") as mock_get_filename,
         patch("os.path.exists") as mock_exists,
@@ -131,7 +131,7 @@ def test_logs_from_running_script_run_script_error(debugger_agent):
         assert "Error details" in result_state["messages"][-1].content
 
 
-def test_run_script_in_env_with_requirements(debugger_agent):
+def test_run_script_in_env_with_requirements(debugger_agent: Debugger):
     with (
         patch("subprocess.run") as mock_run,
         patch("os.path.exists") as mock_exists,
@@ -163,9 +163,7 @@ def test_run_script_in_env_with_requirements(debugger_agent):
         )
 
 
-def test_format_log_message(debugger_agent):
-    from src.utilities.util_functions import format_log_message
-
+def test_format_log_message(debugger_agent: Debugger):
     message = format_log_message(
         work_dir=debugger_agent.work_dir,
         script_path="test_script.py",
