@@ -5,7 +5,6 @@ import base64
 import mimetypes
 import requests
 import subprocess
-import venv
 from src.utilities.start_work_functions import file_folder_ignored, CoderIgnore, Work
 from src.utilities.print_formatters import print_formatted
 from dotenv import load_dotenv, find_dotenv
@@ -13,7 +12,6 @@ from todoist_api_python.api import TodoistAPI
 from langchain_core.messages import HumanMessage, ToolMessage
 import click
 import datetime
-from langchain_core.messages import BaseMessage
 
 load_dotenv(find_dotenv())
 work_dir = os.getenv("WORK_DIR")
@@ -23,6 +21,7 @@ PROJECT_ID = os.getenv('TODOIST_PROJECT_ID')
 
 
 TOOL_NOT_EXECUTED_WORD = "Tool not been executed. "
+WRONG_TOOL_CALL_WORD = "Wrong tool call. "
 
 storyfile_template = """<This is the story of your project for a frontend feedback agent. Modify it according to commentaries provided in <> brackets.>
 
@@ -210,9 +209,9 @@ def exchange_file_contents(state, files, work_dir):
 
 
 def bad_tool_call_looped(state):
-    last_human_messages = [m for m in state["messages"] if m.type == "human"][-4:]
+    last_tool_messages = [m for m in state["messages"] if m.type == "tool"][-4:]
     tool_not_executed_msgs = [
-        m for m in last_human_messages if isinstance(m.content, str) and m.content.startswith(TOOL_NOT_EXECUTED_WORD)
+        m for m in last_tool_messages if isinstance(m.content, str) and m.content.startswith(WRONG_TOOL_CALL_WORD)
     ]
     if len(tool_not_executed_msgs) == 4:
         print_formatted("Seems like AI been looped. Please suggest it how to introduce change correctly:", color="yellow")
@@ -237,7 +236,7 @@ def read_coderrules():
 
 
 def create_coderrules(coderrules_path):
-    print_formatted("(Optional) Describe your project rules and structure to give AI more context. Check docs to learn how to do it https://clean-coder.dev/features/coderrules/. ", color="light_blue")
+    print_formatted("(Optional) Describe your project rules and structure to give AI more context about it. Learn how to do it: https://clean-coder.dev/features/coderrules/. ", color="light_blue")
     rules = input()
     with open(coderrules_path, 'w', encoding='utf-8') as file:
         file.write(rules)
