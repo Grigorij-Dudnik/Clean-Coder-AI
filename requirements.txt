@@ -18,7 +18,7 @@ termcolor==2.4.0
 lxml==5.3.0
 sounddevice==0.5.0
 soundfile==0.12.1
-keyboard==0.13.5
+keyboard-darwin-fix==0.13.6
 pygments==2.18.0
 rich==13.9.2
 vue-lexer==0.0.4
