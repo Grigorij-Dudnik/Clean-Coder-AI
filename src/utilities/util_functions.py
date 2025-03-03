@@ -4,6 +4,7 @@ import xml.etree.ElementTree as ET
 import base64
 import mimetypes
 import requests
+import subprocess
 from src.utilities.start_work_functions import file_folder_ignored, CoderIgnore, Work
 from src.utilities.print_formatters import print_formatted
 from dotenv import load_dotenv, find_dotenv
