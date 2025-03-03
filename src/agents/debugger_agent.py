@@ -143,10 +143,21 @@ class Debugger:
             return write_and_append_log(state, message, logs)
         try:
             stdout, stderr = run_script_in_env(script_path, self.work_dir)
-            message = format_log_message(self.work_dir, script_path, False, stdout, stderr,
+            message = format_log_message(
+                self.work_dir,
+                script_path,
+                False,
+                stdout,
+                stderr,
             )
         except subprocess.CalledProcessError as e:
-            message = format_log_message(self.work_dir, script_path, True, f"Script execution failed: {e.stderr}", e.output, e.stderr,
+            message = format_log_message(
+                self.work_dir,
+                script_path,
+                True,
+                f"Script execution failed: {e.stderr}",
+                e.output,
+                e.stderr,
             )
         return write_and_append_log(state, message, logs)
 
@@ -190,7 +201,6 @@ class Debugger:
         print_formatted("Debugger starting its work", color="green")
         print_formatted("🕵️‍♂️ Need to improve your code? I can help!", color="light_blue")
         file_contents = check_file_contents(self.files, self.work_dir)
-
         inputs = {
             "messages": [
                 self.system_message,
@@ -200,7 +210,6 @@ class Debugger:
                 HumanMessage(content=f"Human feedback: {self.human_feedback}"),
             ]
         }
-
         if self.images:
             inputs["messages"].append(HumanMessage(content=self.images))
         if self.playwright_code:
@@ -210,7 +219,6 @@ class Debugger:
         self.debugger.invoke(inputs, {"recursion_limit": 150})
 
         return self.files
-
 
 
 def prepare_tools(work_dir):
