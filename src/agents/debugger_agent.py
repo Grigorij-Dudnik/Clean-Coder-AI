@@ -21,6 +21,8 @@ from src.utilities.util_functions import (
     bad_tool_call_looped,
     read_coderrules,
     convert_images,
+)
+from src.utilities.debugger_utils import (
     run_script_in_env,
     get_executed_filename,
     format_log_message,
@@ -41,6 +43,7 @@ from src.agents.frontend_feedback import execute_screenshot_codes
 load_dotenv(find_dotenv())
 log_file_path = os.getenv("LOG_FILE")
 frontend_url = os.getenv("FRONTEND_URL")
+execute = os.getenv("EXECUTE")
 
 
 @tool
@@ -108,7 +111,9 @@ class Debugger:
         for tool_call in last_ai_message.tool_calls:
             if tool_call["name"] == "create_file_with_code":
                 self.files.add(tool_call["args"]["filename"])
-                state = self.logs_from_running_script(state)
+            elif tool_call["name"] == "final_response_debugger":
+                if execute:
+                    self.logs_from_running_script(state)
 
         state = exchange_file_contents(state, self.files, self.work_dir)
         return state
@@ -130,10 +135,21 @@ class Debugger:
             return write_and_append_log(state, message, logs)
         try:
             stdout, stderr = run_script_in_env(script_path, self.work_dir)
-            message = format_log_message(self.work_dir, script_path, False, stdout, stderr,
+            message = format_log_message(
+                self.work_dir,
+                script_path,
+                False,
+                stdout,
+                stderr,
             )
         except subprocess.CalledProcessError as e:
-            message = format_log_message(self.work_dir, script_path, True, f"Script execution failed: {e.stderr}", e.output, e.stderr,
+            message = format_log_message(
+                self.work_dir,
+                script_path,
+                True,
+                f"Script execution failed: {e.stderr}",
+                e.output,
+                e.stderr,
             )
         return write_and_append_log(state, message, logs)
 
@@ -181,12 +197,14 @@ class Debugger:
         print_formatted("Debugger starting its work", color="green")
         print_formatted("🛠️ Need to improve your code? I can help!", color="light_blue")
         file_contents = check_file_contents(self.files, self.work_dir)
-        inputs = {"messages": [
-            self.system_message,
-            HumanMessage(content=f"Task: {task}\n\n######\n\nPlan which developer implemented already:\n\n{plan}"),
-            HumanMessage(content=f"File contents: {file_contents}", contains_file_contents=True),
-            HumanMessage(content=f"Human feedback: {self.human_feedback}"),
-        ]}
+        inputs = {
+            "messages": [
+                self.system_message,
+                HumanMessage(content=f"Task: {task}\n\n######\n\nPlan which developer implemented already:\n\n{plan}"),
+                HumanMessage(content=f"File contents: {file_contents}", contains_file_contents=True),
+                HumanMessage(content=f"Human feedback: {self.human_feedback}"),
+            ]
+        }
         if self.images:
             inputs["messages"].append(HumanMessage(content=self.images))
         if self.playwright_code:
@@ -194,7 +212,6 @@ class Debugger:
             screenshot_msg = execute_screenshot_codes(self.playwright_code)
             inputs["messages"].append(screenshot_msg)
         self.debugger.invoke(inputs, {"recursion_limit": 150})
-
 
 
 def prepare_tools(work_dir):

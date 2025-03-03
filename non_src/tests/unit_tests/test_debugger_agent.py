@@ -6,7 +6,7 @@ import pytest
 from langchain_core.messages import HumanMessage
 
 from src.agents.debugger_agent import Debugger
-from src.utilities.util_functions import format_log_message, run_script_in_env, write_and_append_log
+from src.utilities.debugger_utils import format_log_message, run_script_in_env, write_and_append_log
 
 
 @pytest.fixture

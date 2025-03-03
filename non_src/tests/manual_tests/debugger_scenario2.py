@@ -1,6 +1,5 @@
 import logging
 import os
-import shutil
 import sys
 from collections.abc import Generator
 from contextlib import contextmanager
@@ -14,6 +13,7 @@ sys.path.append(str(repo_directory))
 from dotenv import find_dotenv, load_dotenv  # noqa: E402
 
 # Local imports
+from non_src.tests.manual_tests.utils_for_tests import cleanup_work_dir, setup_work_dir  # noqa: E402
 from src.agents.debugger_agent import Debugger  # noqa: E402
 from src.utilities.start_work_functions import file_folder_ignored  # noqa: E402
 
@@ -34,59 +34,28 @@ logging.basicConfig(
 logger = logging.getLogger(Path(__file__).name)
 
 
-class FileOperations:
-    """Encapsulates file system operations for test environment"""
-    
-    @staticmethod
-    def ensure_directory(path: Path) -> None:
-        """Safely create directory structure.
+def create_coderignore(target_dir: Path) -> Path:
+    """Create .coderignore file with standard patterns.
 
-        Args:
-            path (Path): Directory path to create.
-        """
-        try:
-            path.mkdir(parents=True, exist_ok=True)
-            logger.debug("Created directory: %s", path)
-        except OSError:
-            logger.exception("Failed to create directory.")
-            raise
+    Args:
+        target_dir (Path): Directory where .coderignore should be created.
 
-    @staticmethod
-    def copy_tree(src: Path, dest: Path) -> None:
-        """Recursively copy directory contents with logging.
+    Returns:
+        Path: Path to the created .coderignore file.
 
-        Args:
-            src (Path): Source directory to copy from.
-            dest (Path): Destination directory to copy to.
-        """
-        try:
-            for item in src.glob("**/*"):
-                if item.is_file():
-                    relative = item.relative_to(src)
-                    target = dest / relative
-                    FileOperations.ensure_directory(target.parent)
-                    target.write_bytes(item.read_bytes())
-                    logger.info("Copied: %s ➔ %s", item, target)
-        except OSError:
-            logger.exception("Failed to copy files.")
-            raise
-
-    @staticmethod
-    def create_coderignore(target_dir: Path) -> Path:
-        """Create .coderignore file with standard patterns.
-
-        Args:
-            target_dir (Path): Directory where .coderignore should be created.
-
-        Returns:
-            Path: Path to the created .coderignore file.
-        """
+    Raises:
+        OSError: If directory creation or file writing fails.
+    """
+    try:
         clean_coder_dir = target_dir / ".clean_coder"
-        FileOperations.ensure_directory(clean_coder_dir)
+        clean_coder_dir.mkdir(parents=True, exist_ok=True)
         ignore_file = clean_coder_dir / ".coderignore"
         ignore_file.write_text("\n".join(CODERIGNORE_PATTERNS))
         logger.info("Created .coderignore at: %s", ignore_file)
         return ignore_file
+    except OSError as e:
+        logger.exception("Failed to create .coderignore: %s", e)
+        raise
 
 
 @contextmanager
@@ -99,18 +68,21 @@ def managed_workspace(test_files: Path, work_dir: Path) -> Generator[Path, None,
 
     Yields:
         Path: The path to the temporary workspace.
+
+    Raises:
+        Exception: If workspace setup fails.
     """
     try:
-        FileOperations.ensure_directory(work_dir)
-        FileOperations.copy_tree(test_files, work_dir)
-        FileOperations.create_coderignore(work_dir)
+        setup_work_dir(test_files_dir=test_files, manual_tests_folder=work_dir)
+        logger.info("Workspace set up with files from: %s", test_files)
+        create_coderignore(work_dir)
         yield work_dir
-    except Exception:
-        logging.exception("Error during workspace setup.")
+    except Exception as e:
+        logger.exception("Error during workspace setup: %s", e)
         raise
     finally:
         if work_dir.exists():
-            shutil.rmtree(work_dir)
+            cleanup_work_dir(manual_tests_folder=work_dir)
             logger.info("Cleaned up workspace: %s", work_dir)
 
 
@@ -121,7 +93,7 @@ def collect_project_files(root_dir: Path) -> set[str]:
         root_dir (Path): Root directory to scan for files.
 
     Returns:
-        Set[str]: Set of relative file paths.
+        set[str]: Set of relative file paths.
     """
     files = set()
     for root, _, filenames in os.walk(root_dir):
@@ -144,42 +116,46 @@ def configure_environment() -> tuple[Path, Path]:
     """
     repo_root = Path(__file__).parents[3].resolve()
     sys.path.append(str(repo_root))
-    
+
     load_dotenv(find_dotenv())
     logger.info("Environment variables loaded")
-    
+
     project_files = repo_root / "non_src" / "tests" / "manual_tests" / "projects_files" / "debugger_scenario_2_files"
     work_dir = Path(__file__).parent.resolve() / "sandbox_work_dir"
     return project_files, work_dir
 
 
 def main_test_flow() -> None:
-    """Main execution flow for the debugger test scenario"""
+    """Main execution flow for the debugger test scenario."""
     project_files_dir, workspace_dir = configure_environment()
-    
+
     with managed_workspace(project_files_dir, workspace_dir) as workspace:
         files = collect_project_files(workspace)
         logger.info("Workspace contains %d files: %s", len(files), files)
-        
-        debugger = Debugger(files, str(workspace), "Please ensure the script runs correctly and logs its output.", [],
+
+        debugger = Debugger(
+            files=files,
+            work_dir=str(workspace),
+            human_feedback="Please ensure the script runs correctly and logs its output.",
+            image_paths=[],
         )
-        
+
         test_state = {
             "messages": [
                 HumanMessage(content="File contents: sample_test.py:\n\nprint('Hello World!')\n"),
             ],
         }
-        
+
         updated_state = debugger.logs_from_running_script(test_state)
-        
+
         # Verification checks
         env_path = workspace / ENV_DIR_NAME
         logs_path = workspace / LOGS_FILE_NAME
-        assert env_path.exists(), "Virtual environment not created"  # noqa: S101
-        assert logs_path.exists(), "Log file missing"  # noqa: S101
-        
+        assert env_path.exists(), "Virtual environment not created"
+        assert logs_path.exists(), "Log file missing"
+
         logger.info(f"Updated state: {updated_state}")
-        assert "Hello World!" in updated_state["messages"][-1].content, "Missing expected output"  # noqa: S101
+        assert "Hello World!" in updated_state["messages"][-1].content, "Missing expected output"
 
 
 if __name__ == "__main__":
