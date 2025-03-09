@@ -2,8 +2,10 @@ import re
 import os
 import xml.etree.ElementTree as ET
 import base64
+import mimetypes
 import requests
-from src.utilities.start_work_functions import file_folder_ignored, Work
+import subprocess
+from src.utilities.start_work_functions import file_folder_ignored, CoderIgnore, Work
 from src.utilities.print_formatters import print_formatted
 from dotenv import load_dotenv, find_dotenv
 from todoist_api_python.api import TodoistAPI
@@ -46,7 +48,7 @@ For being logged in as admin user, use username="frontend.feedback@admin", passw
 
 
 def check_file_contents(files, work_dir, line_numbers=True):
-    file_contents = f"Files shown: {files}\n\n"
+    file_contents = str()
     for file_name in files:
         file_content = watch_file(file_name, work_dir, line_numbers)
         file_contents += file_content + "\n\n###\n\n"
@@ -57,20 +59,29 @@ def check_file_contents(files, work_dir, line_numbers=True):
 def watch_file(filename, work_dir, line_numbers=True):
     if file_folder_ignored(filename):
         return "You are not allowed to work with this file."
+    
+    file_path = join_paths(work_dir, filename)
+    mime_type, _ = mimetypes.guess_type(file_path)
+    
+    # Check if the file is not a text file
+    if mime_type and not mime_type.startswith('text'):
+        return f"File {filename} is a binary file and cannot be read as text."
+    
     try:
-        with open(join_paths(work_dir, filename), 'r', encoding='utf-8') as file:
+        with open(file_path, 'r', encoding='utf-8') as file:
             lines = file.readlines()
     except FileNotFoundError:
-        return "File not exists."
+        return "File does not exist."
+    except UnicodeDecodeError:
+        return f"File {filename} could not be decoded as UTF-8. It may be a binary file."
+    
     if line_numbers:
         formatted_lines = [f"{i + 1}|{line.rstrip()} |{i+1}\n" for i, line in enumerate(lines)]
     else:
         formatted_lines = [f"{line.rstrip()}\n" for line in lines]
     file_content = "".join(formatted_lines)
-    file_content = filename + ":\n\n" + file_content
-
+    file_content = f"{filename}:\n\n{file_content}"
     return file_content
-
 
 def find_tool_xml(input_str):
     match = re.search('```xml(.*?)```', input_str, re.DOTALL)
@@ -115,7 +126,6 @@ def convert_images(image_paths):
     images = []
     for image_path in image_paths:
         if not os.path.exists(join_paths(work_dir, image_path)):
-            print_formatted(f"Image not exists: {image_path}", color="yellow")
             continue
         images.extend([
                  {"type": "text", "text": f"I###\n{image_path}"},
@@ -145,8 +155,8 @@ def list_directory_tree(work_dir):
     tree = []
     for root, dirs, files in os.walk(work_dir):
         # Filter out forbidden directories and files
-        dirs[:] = [d for d in dirs if not file_folder_ignored(d)]
-        files = [f for f in files if not file_folder_ignored(f)]
+        dirs[:] = [d for d in dirs if not file_folder_ignored(d, CoderIgnore.get_forbidden())]
+        files = [f for f in files if not file_folder_ignored(f, CoderIgnore.get_forbidden())]
         rel_path = os.path.relpath(root, work_dir)
         depth = rel_path.count(os.sep)
         indent = "│ " * depth
@@ -231,7 +241,3 @@ def create_coderrules(coderrules_path):
         file.write(rules)
     print_formatted(f"Project rules saved. You can edit it in .coderrules file.", color="green")
     return rules
-
-
-if __name__ == '__main__':
-    print(list_directory_tree(Work.dir()))
