@@ -41,7 +41,7 @@ QUESTIONARY_STYLE = questionary.Style([
     ('highlighted', 'fg:green bold'),   # Highlighted choice
     ('selected', 'fg:green bold'),      # Selected choice
     ('separator', 'fg:magenta'),        # Separator between choices
-    ('instruction', 'fg:white'),        # Additional instructions
+    ('instruction', 'fg:#FFD700'),      # Additional instructions now in golden yellow (hex color)
 ])
 
 

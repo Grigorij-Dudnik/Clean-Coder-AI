@@ -20,16 +20,13 @@ For additional context, here's the directory tree:
 
 Instructions:
 
-1. Plan the logic:
-   Outline the logic algorithm before proposing code changes.
-
-2. Draft a detailed modification plan:
+1. Draft a detailed modification plan:
    - Prioritize readability
    - Follow the DRY (Don't Repeat Yourself) principle
    - Use meaningful variable names
    - Write concise code
 
-3. Format code snippets in your plan properly:
+2. Format code snippets in your plan properly:
    In your code snippets, follow udiff format with filename we working on in the header. For each code modification, use the following structure:
 
    ```filename.extension
@@ -43,3 +40,4 @@ Instructions:
 Remember:
 - If you're unsure how to implement a given task, don't improvise. Simply state that you don't know. Assuming is not allowed - just tell "please provide me with more files" when needed.
 - When adjusting your plan based on user feedback, always provide a complete version of the plan, referenced to original file contents. Don't reference previous plan.
+- Previous plan proposition have not been implemented. Always reference your code changes to code files you have in the context, not to the previous plan proposition.

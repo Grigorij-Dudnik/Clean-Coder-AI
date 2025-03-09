@@ -216,89 +216,134 @@ def parse_yaml(yaml_string):
 
 if __name__ == "__main__":
     code = """
-<template>
-  <div class="form-container">
-    <Notification v-show="notificationMessage" :message="notificationMessage" :type="notificationType" />
-    <h1>Change Password</h1>
-    <form @submit.prevent="handleSubmit">
-      <div>
-        <label for="current-password">Current Password:</label>
-        <input type="password" v-model="currentPassword" required />
+'use client';
+import React, { useEffect, useState } from 'react';
+import { useRouter } from 'next/navigation';
+
+// Scale indicator component showing agreement levels from 1-5
+const ScaleIndicator = () => (
+  <div className="flex flex-col items-center mb-12">
+    <div className="w-full max-w-2xl mx-auto">
+      <div className="flex justify-between text-sm text-gray-600 mb-1">
+        <span>Highly disagree</span>
+        <span>Highly agree</span>
       </div>
-      <div>
-        <label for="new-password">New Password:</label>
-        <input type="password" v-model="newPassword" required />
+      <div className="relative w-full h-[2px] bg-gray-200 mb-8">
+        {Array.from({ length: 5 }, (_, i) => i + 1).map((num) => (
+          <div
+            key={num}
+            className="absolute -translate-x-1/2"
+            style={{ left: `${((num - 1) * 100) / 4}%` }}
+          >
+            <div className="absolute -top-3 w-[2px] h-[6px] bg-gray-300" />
+            <div className="absolute top-4 text-sm text-gray-600">
+              {num}
+            </div>
+          </div>
+        ))}
       </div>
-      <div>
-        <label for="confirm-new-password">Confirm New Password:</label>
-        <input type="password" v-model="confirmNewPassword" required />
-      </div>
-      <button type="submit">Change Password</button>
-    </form>
+    </div>
   </div>
-</template>
+);
 
-<script>
-import { useAuthStore } from '@/stores/auth';
-import Notification from '@/components/Notification.vue';
+function NavHeader() {
+  const router = useRouter();
+  return (
+    <div className="flex flex-col items-center">
+      <div className="flex items-center justify-start w-full mb-2">
+        <button
+          className="text-gray-700 hover:text-gray-900 mr-4"
+          onClick={() => router.back()}
+          aria-label="Go back"
+        >
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            fill="none"
+            viewBox="0 0 24 24"
+            strokeWidth={2}
+            stroke="currentColor"
+            className="w-5 h-5"
+          >
+            <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 19.5L8.25 12l7.5-7.5" />
+          </svg>
+        </button>
+        <h1 className="flex-grow text-center text-xl font-bold">Survey Results</h1>
+      </div>
+    </div>
+  );
+}
 
-export default {
-  components: {
-    Notification,
-  },
-  data() {
-    return {
-      currentPassword: '',
-      newPassword: '',
-      confirmNewPassword: '',
-      apiUrl: import.meta.env.VITE_API_URL,
-      notificationMessage: '',
-      notificationType: 'positive',
-    };
-  },
-  methods: {
-    async handleSubmit() {
-      if (this.newPassword !== this.confirmNewPassword) {
-        this.notificationMessage = 'New passwords do not match';
-        this.notificationType = 'negative';
-        return;
-      }
+export default function Page({ params }: { params: Promise<{ uuid: string }> }) {
+  const { uuid } = React.use(params);
+  const [profile, setProfile] = useState<any>(null);
+  const [error, setError] = useState<string>('');
 
-      const formData = new FormData();
-      formData.append('current_password', this.currentPassword);
-      formData.append('new_password', this.newPassword);
-
+  useEffect(() => {
+    const fetchProfile = async () => {
       try {
-        const response = await fetch(this.apiUrl + '/change-password', {
-          method: 'POST',
-          headers: {
-            'Authorization': `Bearer ${localStorage.getItem('token')}`,
-          },
-          body: formData,
-        });
+        const response = await fetch(
+          `${process.env.NEXT_PUBLIC_API_URL}/profile/${uuid}`
+        );
         if (!response.ok) {
-          throw new Error('Password change failed');
+          throw new Error('Failed to fetch profile data');
         }
-        this.notificationMessage = 'Password changed successfully';
-        this.notificationType = 'positive';
-        setTimeout(() => {
-          this.notificationMessage = '';
-          this.$router.push('/');
-        }, 2000);
-      } catch (error) {
-        console.error('Error:', error);
-        this.notificationMessage = error.message;
-        this.notificationType = 'negative';
-      } finally {
-        this.currentPassword = '';
-        this.newPassword = '';
-        this.confirmNewPassword = '';
+        const data = await response.json();
+        setProfile(data);
+      } catch (err: any) {
+        console.error('Error details:', err);
+        setError(err.message || 'An error occurred');
       }
-    },
-  },
-};
-</script>
+    };
 
-<style scoped src="@/assets/styles/forms.css"></style>
+    fetchProfile();
+  }, [uuid]);
+
+  if (error) {
+    return (
+      <div className="p-4 text-red-500">
+        {error}
+      </div>
+    );
+  }
+
+  if (!profile) {
+    return (
+      <div className="p-4">
+        Loading profile data...
+      </div>
+    );
+  }
+
+  if (!profile.survey_data) {
+    return <div className="p-4 text-gray-700">No survey data available.</div>;
+  }
+
+  return (
+    <div className="px-4 py-2 text-gray-900 max-w-4xl mx-auto">
+      <div className="mb-8">
+        <NavHeader />
+        <ScaleIndicator />
+      </div>
+
+      {profile.survey_data.map((category) => (
+        <div key={category.name} className="mb-10">
+          <h2 className="text-base font-semibold text-gray-800 mb-4">
+            {category.name}
+          </h2>
+          {category.statements.map((statement: any) => (
+            <div key={statement.id} className="flex items-start py-4 border-b border-gray-200 last:border-b-0">
+              <span className="text-2xl font-semibold text-gray-900 w-8 text-center">
+                {statement.value}
+              </span>
+              <p className="text-base text-gray-700 leading-relaxed flex-1 ml-6">
+                {statement.text}
+              </p>
+            </div>
+          ))}
+        </div>
+      ))}
+    </div>
+  );
+}
 """
-    print(parse_vue_basic(code))
+    print(parse_tsx(code))

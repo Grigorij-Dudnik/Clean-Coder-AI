@@ -76,10 +76,9 @@ def watch_file(filename, work_dir, line_numbers=True):
         return f"File {filename} could not be decoded as UTF-8. It may be a binary file."
     
     if line_numbers:
-        formatted_lines = [f"{i + 1}|{line[:-1]}\n" for i, line in enumerate(lines)]
+        formatted_lines = [f"{i + 1}|{line.rstrip()} |{i+1}\n" for i, line in enumerate(lines)]
     else:
-        formatted_lines = [f"{line[:-1]}\n" for line in lines]
-    
+        formatted_lines = [f"{line.rstrip()}\n" for line in lines]
     file_content = "".join(formatted_lines)
     file_content = f"{filename}:\n\n{file_content}"
     return file_content

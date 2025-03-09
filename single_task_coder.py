@@ -17,6 +17,7 @@ from src.utilities.user_input import user_input
 from src.utilities.start_project_functions import set_up_dot_clean_coder_dir
 from src.utilities.util_functions import create_frontend_feedback_story
 from concurrent.futures import ThreadPoolExecutor
+from src.tools.rag.index_file_descriptions import prompt_index_project_files
 
 
 use_frontend_feedback = bool(os.getenv("FRONTEND_URL"))
@@ -54,8 +55,9 @@ def run_clean_coder_pipeline(task: str, work_dir: str, doc_harvest: bool = False
 
 if __name__ == "__main__":
     work_dir = os.getenv("WORK_DIR")
-    set_up_dot_clean_coder_dir(work_dir)
-    task = user_input("Provide task to be executed. ")
     if not work_dir:
         raise Exception("WORK_DIR variable not provided. Please add WORK_DIR to .env file")
+    set_up_dot_clean_coder_dir(work_dir)
+    prompt_index_project_files()
+    task = user_input("Provide task to be executed. ")
     run_clean_coder_pipeline(task, work_dir)

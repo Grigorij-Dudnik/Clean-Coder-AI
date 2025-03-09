@@ -16,6 +16,7 @@ from langchain_core.load import dumps
 from langgraph.graph import StateGraph
 from src.tools.tools_project_manager import add_task, modify_task, finish_project_planning, reorder_tasks
 from src.tools.tools_coder_pipeline import prepare_list_dir_tool, prepare_see_file_tool, ask_human_tool
+from src.tools.rag.index_file_descriptions import prompt_index_project_files
 from src.utilities.manager_utils import actualize_tasks_list_and_progress_description, setup_todoist_project_if_needed, get_manager_messages
 from src.utilities.langgraph_common_functions import call_model, call_tool, multiple_tools_msg, no_tools_msg, empty_message_msg
 from src.utilities.start_project_functions import set_up_dot_clean_coder_dir
@@ -34,7 +35,11 @@ class Manager:
     def __init__(self):
         load_dotenv(find_dotenv())
         self.work_dir = os.getenv("WORK_DIR")
+        # initial project setup
         set_up_dot_clean_coder_dir(self.work_dir)
+        setup_todoist_project_if_needed()
+        prompt_index_project_files()
+
         self.tools = self.prepare_tools()
         self.llms = init_llms_medium_intelligence(tools=self.tools, run_name="Manager")
         self.manager = self.setup_workflow()
@@ -113,7 +118,6 @@ class Manager:
 
     def run(self):
         print_formatted("😀 Hello! I'm Manager agent. Let's plan your project together!", color="green")
-        setup_todoist_project_if_needed()
 
         messages = get_manager_messages(self.saved_messages_path)
         inputs = {"messages": messages}

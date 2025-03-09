@@ -67,7 +67,7 @@ def call_advanced_planner(state):
     logic_pseudocode = llm_strong.invoke(logic_planner_messages)
     print_formatted("\nIntermediate planning done. Finalizing plan...", color="light_magenta")
     if os.getenv("SHOW_LOGIC_PLAN"):
-        print(logic_pseudocode.content)
+        print_formatted(logic_pseudocode.content, color="light_yellow")
 
     state["plan_finalizer_messages"].append(HumanMessage(content=f"Logic pseudocode plan to follow:\n\n{logic_pseudocode.content}"))
     plan_finalizer_messages = state["plan_finalizer_messages"]

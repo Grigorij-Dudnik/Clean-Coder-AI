@@ -10,8 +10,6 @@ langchain-ollama==0.2.0
 playwright==1.47.0
 libsass==0.23.0
 openai==1.61.1
-cohere==5.10.0
-langchain-cohere==0.3.0
 chromadb==0.4.21
 todoist-api-python==2.1.7
 termcolor==2.4.0

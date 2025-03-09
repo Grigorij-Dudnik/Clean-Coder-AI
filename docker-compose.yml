@@ -10,7 +10,6 @@ services:
       - ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY}
       - TODOIST_API_KEY=${TODOIST_API_KEY}
       - TODOIST_PROJECT_ID=${TODOIST_PROJECT_ID}
-      - COHERE_API_KEY=${COHERE_API_KEY}
       - LOG_FILE=${LOG_FILE:-}
     volumes:
       - .:/Clean_Coder
@@ -29,7 +28,6 @@ services:
       - WORK_DIR=/work_dir
       - OPENAI_API_KEY=${OPENAI_API_KEY}
       - ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY}
-      - COHERE_API_KEY=${COHERE_API_KEY}
       - LOG_FILE=${LOG_FILE:-}
     volumes:
       - .:/Clean_Coder

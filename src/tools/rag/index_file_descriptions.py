@@ -5,16 +5,30 @@ from langchain_core.output_parsers import StrOutputParser
 from dotenv import load_dotenv, find_dotenv
 import chromadb
 import sys
+import questionary
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..', '..')))
 from src.utilities.util_functions import join_paths, read_coderrules
-from src.utilities.start_work_functions import CoderIgnore, file_folder_ignored
+from src.utilities.start_work_functions import file_folder_ignored
 from src.utilities.llms import init_llms_mini
 from src.tools.rag.code_splitter import split_code
-
+from src.utilities.print_formatters import print_formatted
+from src.tools.rag.retrieval import vdb_available
+from src.utilities.manager_utils import QUESTIONARY_STYLE
+from tqdm import tqdm
 
 load_dotenv(find_dotenv())
 work_dir = os.getenv("WORK_DIR")
 
+GOLDEN = "\033[38;5;220m"
+MAGENTA = "\033[95m"
+RESET = "\033[0m"
+
+# Customize tqdm's bar format with golden and magenta colors
+bar_format = (
+    f"{GOLDEN}{{desc}}: {MAGENTA}{{percentage:3.0f}}%{GOLDEN}|"
+    f"{{bar}}| {MAGENTA}{{n_fmt}}/{{total_fmt}} files "
+    f"{GOLDEN}[{{elapsed}}<{{remaining}}, {{rate_fmt}}{{postfix}}]{RESET}"
+)
 
 def is_code_file(file_path):
     # List of common code file extensions
@@ -51,9 +65,8 @@ def collect_file_pathes(subfolders, work_dir):
     return allowed_files
 
 
-def write_file_descriptions(subfolders_with_files=['/']):
+def write_file_descriptions(subfolders_with_files=['/']): 
     all_files = collect_file_pathes(subfolders_with_files, work_dir)
-
     coderrules = read_coderrules()
 
     prompt = ChatPromptTemplate.from_template(
@@ -74,17 +87,17 @@ Go straight to the thing in description, without starting sentence.
 """
     )
     llms = init_llms_mini(tools=[], run_name='File Describer')
-    llm = llms[0]
+    llm = llms[0].with_fallbacks(llms[1:])
     chain = prompt | llm | StrOutputParser()
 
     description_folder = join_paths(work_dir, '.clean_coder/files_and_folders_descriptions')
     Path(description_folder).mkdir(parents=True, exist_ok=True)
-    # iterate over all files, take 8 files at once and descrive files in batch
     batch_size = 8
+    pbar = tqdm(total=len(all_files), desc=f"[1/2]Describing files", bar_format=bar_format)
+
     for i in range(0, len(all_files), batch_size):
         files_iteration = all_files[i:i + batch_size]
         descriptions = chain.batch([get_content(file_path) for file_path in files_iteration])
-        print(descriptions)
 
         for file_path, description in zip(files_iteration, descriptions):
             file_name = file_path.relative_to(work_dir).as_posix().replace('/', '=')
@@ -92,6 +105,11 @@ Go straight to the thing in description, without starting sentence.
 
             with open(output_path, 'w', encoding='utf-8') as out_file:
                 out_file.write(description)
+
+        # Update by actual number of files processed in this batch
+        pbar.update(len(files_iteration))
+
+    pbar.close()  # Don't forget to close the progress bar when done
 
 
 
@@ -112,8 +130,10 @@ def write_file_chunks_descriptions(subfolders_with_files=['/']):
 
     description_folder = join_paths(work_dir, '.clean_coder/files_and_folders_descriptions')
     Path(description_folder).mkdir(parents=True, exist_ok=True)
+
     # iterate chunks inside of the file
-    for file_path in all_files:
+    for file_path in tqdm(all_files, desc=f"[2/2]Describing file chunks",
+                 bar_format=bar_format):
         file_content = get_content(file_path)
         # get file extenstion
         extension = file_path.suffix.lstrip('.')
@@ -122,7 +142,6 @@ def write_file_chunks_descriptions(subfolders_with_files=['/']):
         if len(file_chunks) <= 1:
             continue
         descriptions = chain.batch([{'coderrules': coderrules, 'file_code': file_content, 'chunk_code': chunk} for chunk in file_chunks])
-        print(descriptions)
 
         for nr, description in enumerate(descriptions):
             file_name = f"{file_path.relative_to(work_dir).as_posix().replace('/', '=')}_chunk{nr}"
@@ -134,6 +153,7 @@ def write_file_chunks_descriptions(subfolders_with_files=['/']):
 
 def upload_descriptions_to_vdb():
     """Uploads descriptions, created by write_file_chunks_descriptions, into vector database."""
+    print_formatted("Uploading file descriptions to vector storage...", color='magenta')
     chroma_client = chromadb.PersistentClient(path=join_paths(work_dir, '.clean_coder/chroma_base'))
     collection_name = f"clean_coder_{Path(work_dir).name}_file_descriptions"
 
@@ -156,9 +176,30 @@ def upload_descriptions_to_vdb():
             )
 
 
-if __name__ == '__main__':
+def prompt_index_project_files():
+    """
+    Checks if the vector database (VDB) is available.
+    If not, prompts the user via questionary to index project files for better search.
+    On a "Yes" answer, triggers write_and_index_descriptions().
+    """
+    if not vdb_available():
+        answer = questionary.select(
+            "Do you want to index your project files for better search?",
+            choices=["Index", "Skip"],
+            style=QUESTIONARY_STYLE,
+            instruction="\nHint: Skip for testing Clean Coder; index for real projects."
+        ).ask()
+        if answer == "Index":
+            write_and_index_descriptions()
+
+
+def write_and_index_descriptions():
     #provide optionally which subfolders needs to be checked, if you don't want to describe all project folder
     write_file_descriptions(subfolders_with_files=['/'])
     write_file_chunks_descriptions()
 
     upload_descriptions_to_vdb()
+
+
+if __name__ == "__main__":
+    write_and_index_descriptions()
