@@ -43,7 +43,7 @@ from src.agents.frontend_feedback import execute_screenshot_codes
 load_dotenv(find_dotenv())
 log_file_path = os.getenv("LOG_FILE")
 frontend_url = os.getenv("FRONTEND_URL")
-execute = os.getenv("EXECUTE")
+debugger_execute_code = os.getenv("DEBUGGER_EXECUTE_CODE")
 
 
 @tool
@@ -112,7 +112,7 @@ class Debugger:
             if tool_call["name"] == "create_file_with_code":
                 self.files.add(tool_call["args"]["filename"])
             elif tool_call["name"] == "final_response_debugger":
-                if execute:
+                if debugger_execute_code:
                     self.logs_from_running_script(state)
 
         state = exchange_file_contents(state, self.files, self.work_dir)
