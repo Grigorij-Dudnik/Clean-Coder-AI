@@ -1,0 +1,14 @@
+First, get known with info about project (may be useful, may be not):
+
+'''
+{coderrules}
+'''
+
+Describe the code in 4 sentences or less, focusing only on important information from integration point of view.
+Write what file is responsible for.
+
+Go straight to the thing in description, without starting sentence.
+
+'''
+{code}
+'''

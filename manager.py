@@ -1,24 +1,36 @@
 if __name__ == "__main__":
     from src.utilities.start_work_functions import print_ascii_logo
+
     print_ascii_logo()
 
 from dotenv import find_dotenv, load_dotenv
 from src.utilities.set_up_dotenv import set_up_env_manager, add_todoist_envs
 import os
+
 if not find_dotenv():
     set_up_env_manager()
 elif load_dotenv(find_dotenv()) and not os.getenv("TODOIST_API_KEY"):
     add_todoist_envs()
 
 from typing import TypedDict, Sequence
-from langchain_core.messages import BaseMessage, HumanMessage, ToolMessage
+from langchain_core.messages import BaseMessage, HumanMessage
 from langchain_core.load import dumps
 from langgraph.graph import StateGraph
 from src.tools.tools_project_manager import add_task, modify_task, finish_project_planning, reorder_tasks
 from src.tools.tools_coder_pipeline import prepare_list_dir_tool, prepare_see_file_tool, ask_human_tool
 from src.tools.rag.index_file_descriptions import prompt_index_project_files
-from src.utilities.manager_utils import actualize_tasks_list_and_progress_description, setup_todoist_project_if_needed, get_manager_messages
-from src.utilities.langgraph_common_functions import call_model, call_tool, multiple_tools_msg, no_tools_msg, empty_message_msg
+from src.utilities.manager_utils import (
+    actualize_tasks_list_and_progress_description,
+    setup_todoist_project_if_needed,
+    get_manager_messages,
+)
+from src.utilities.langgraph_common_functions import (
+    call_model,
+    call_tool,
+    multiple_tools_msg,
+    no_tools_msg,
+    empty_message_msg,
+)
 from src.utilities.start_project_functions import set_up_dot_clean_coder_dir
 from src.utilities.util_functions import join_paths
 from src.utilities.llms import init_llms_medium_intelligence
@@ -66,8 +78,7 @@ class Manager:
         last_message = state["messages"][-1]
         if last_message.content in (multiple_tools_msg, no_tools_msg):
             return "agent"
-        else:
-            return "tool"
+        return "tool"
 
     # just functions
     def cut_off_context(self, state):
@@ -76,11 +87,15 @@ class Manager:
             last_messages = state["messages"][-approx_nr_msgs_to_save:]
 
             # Find the index of the first 'ai' message from the end in the last 30 messages
-            ai_message_index_in_last_msgs = next((i for i, message in enumerate(last_messages) if message.type == "ai"), None)
+            ai_message_index_in_last_msgs = next(
+                (i for i, message in enumerate(last_messages) if message.type == "ai"), None
+            )
             # Calculate the actual index of the 'ai' message in the original list
             ai_message_index = len(state["messages"]) - approx_nr_msgs_to_save + ai_message_index_in_last_msgs
             # Collect all messages starting from the 'ai' message
-            last_messages_excluding_system = [msg for msg in state["messages"][ai_message_index:] if msg.type != "system"]
+            last_messages_excluding_system = [
+                msg for msg in state["messages"][ai_message_index:] if msg.type != "system"
+            ]
 
             system_message = state["messages"][0]
             state["messages"] = [system_message] + last_messages_excluding_system

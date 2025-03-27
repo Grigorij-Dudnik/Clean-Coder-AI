@@ -4,13 +4,13 @@ from langgraph.graph import StateGraph, END
 from dotenv import load_dotenv, find_dotenv
 from langchain.tools import tool
 from src.tools.tools_coder_pipeline import (
-     prepare_see_file_tool, prepare_list_dir_tool, retrieve_files_by_semantic_query
+    prepare_see_file_tool,
+    prepare_list_dir_tool,
+    retrieve_files_by_semantic_query,
 )
 from src.tools.rag.retrieval import vdb_available
 from src.utilities.util_functions import list_directory_tree
-from src.utilities.langgraph_common_functions import (
-    call_model, call_tool, no_tools_msg
-)
+from src.utilities.langgraph_common_functions import call_model, call_tool, no_tools_msg
 from src.utilities.llms import init_llms_mini
 import os
 
@@ -41,6 +41,7 @@ parent_dir = os.path.dirname(os.path.dirname(os.path.realpath(__file__)))
 with open(f"{parent_dir}/prompts/researcher_file_answerer.prompt", "r") as f:
     system_prompt_template = f.read()
 
+
 # Logic for conditional edges
 def after_agent_condition(state):
     last_message = state["messages"][-1]
@@ -53,7 +54,7 @@ def after_agent_condition(state):
         return "tool"
 
 
-class ResearchFileAnswerer():
+class ResearchFileAnswerer:
     def __init__(self, work_dir):
         see_file = prepare_see_file_tool(work_dir)
         list_dir = prepare_list_dir_tool(work_dir)
@@ -85,7 +86,8 @@ class ResearchFileAnswerer():
         if len(last_message.tool_calls) > 1:
             # Filter out the tool call with "final_response_researcher"
             state["messages"][-1].tool_calls = [
-                tool_call for tool_call in last_message.tool_calls
+                tool_call
+                for tool_call in last_message.tool_calls
                 if tool_call["name"] != "final_response_file_answerer"
             ]
         return state
@@ -94,7 +96,8 @@ class ResearchFileAnswerer():
     def research_and_answer(self, questions):
         system_message = system_prompt_template.format(questions=questions)
         inputs = {
-            "messages": [SystemMessage(content=system_message), HumanMessage(content=list_directory_tree(work_dir))]}
+            "messages": [SystemMessage(content=system_message), HumanMessage(content=list_directory_tree(work_dir))]
+        }
         researcher_response = self.researcher.invoke(inputs, {"recursion_limit": 100})["messages"][-1]
         answer = researcher_response.tool_calls[0]["args"]
 

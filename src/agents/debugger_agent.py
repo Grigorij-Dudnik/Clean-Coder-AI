@@ -8,7 +8,7 @@ from src.tools.tools_coder_pipeline import (
     prepare_replace_code_tool,
     prepare_insert_code_tool,
 )
-from typing import TypedDict, Sequence
+from typing import TypedDict, Sequence, List
 from langchain_core.messages import BaseMessage, HumanMessage, SystemMessage, ToolMessage
 from langgraph.graph import StateGraph
 from dotenv import load_dotenv, find_dotenv
@@ -17,10 +17,10 @@ from src.utilities.print_formatters import print_formatted
 from src.utilities.util_functions import (
     check_file_contents,
     check_application_logs,
-    exchange_file_contents,
     bad_tool_call_looped,
     read_coderrules,
     convert_images,
+    list_directory_tree,
 )
 from src.utilities.debugger_utils import (
     run_script_in_env,
@@ -38,7 +38,9 @@ from src.utilities.langgraph_common_functions import (
     no_tools_msg,
     agent_looped_human_help,
 )
+from src.utilities.objects import CodeFile
 from src.agents.frontend_feedback import execute_screenshot_codes
+from src.linters.static_analisys import python_static_analysis
 
 load_dotenv(find_dotenv())
 log_file_path = os.getenv("LOG_FILE")
@@ -70,9 +72,7 @@ class Debugger:
         self.work_dir = work_dir
         self.tools = prepare_tools(work_dir)
         self.llms = init_llms_medium_intelligence(self.tools, "Debugger")
-        self.system_message = SystemMessage(
-            content=system_prompt_template.format(project_rules=read_coderrules())
-        )
+        self.system_message = SystemMessage(content=system_prompt_template.format(project_rules=read_coderrules()))
         self.files = files
         self.images = convert_images(image_paths)
         self.human_feedback = human_feedback
@@ -110,12 +110,21 @@ class Debugger:
 
         for tool_call in last_ai_message.tool_calls:
             if tool_call["name"] == "create_file_with_code":
-                self.files.add(tool_call["args"]["filename"])
+                new_file = CodeFile(tool_call["args"]["filename"], is_modified=True)
+                self.files.add(new_file)
+            elif tool_call["name"] in ["replace_code", "insert_code"]:
+                filename = tool_call["args"]["filename"]
+                for file in self.files:
+                    if file.filename == filename:
+                        file.is_modified = True
+                        break
             elif tool_call["name"] == "final_response_debugger":
-                if debugger_execute_code:
-                    self.logs_from_running_script(state)
+                files_to_check = [file for file in self.files if file.filename.endswith(".py") and file.is_modified]
+                analysis_result = python_static_analysis(files_to_check)
+                if analysis_result:
+                    state["messages"].append(HumanMessage(content=analysis_result))
 
-        state = exchange_file_contents(state, self.files, self.work_dir)
+
         return state
 
     def check_log(self, state: dict) -> dict:
@@ -193,14 +202,16 @@ class Debugger:
         else:
             return "agent"
 
-    def do_task(self, task, plan):
+    def do_task(self, task: str, plan: str) -> List[CodeFile]:
         print_formatted("Debugger starting its work", color="green")
-        print_formatted("🛠️ Need to improve your code? I can help!", color="light_blue")
+        print_formatted("🕵️‍♂️ Need to improve your code? I can help!", color="light_blue")
         file_contents = check_file_contents(self.files, self.work_dir)
+
         inputs = {
             "messages": [
                 self.system_message,
                 HumanMessage(content=f"Task: {task}\n\n######\n\nPlan which developer implemented already:\n\n{plan}"),
+                HumanMessage(content=list_directory_tree(self.work_dir)),
                 HumanMessage(content=f"File contents: {file_contents}", contains_file_contents=True),
                 HumanMessage(content=f"Human feedback: {self.human_feedback}"),
             ]
@@ -212,6 +223,8 @@ class Debugger:
             screenshot_msg = execute_screenshot_codes(self.playwright_code)
             inputs["messages"].append(screenshot_msg)
         self.debugger.invoke(inputs, {"recursion_limit": 150})
+
+        return self.files
 
 
 def prepare_tools(work_dir):

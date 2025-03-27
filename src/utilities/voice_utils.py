@@ -9,7 +9,6 @@ from dotenv import load_dotenv, find_dotenv
 load_dotenv(find_dotenv())
 
 
-
 class VoiceRecorder:
     def __init__(self):
         self.libportaudio_available = True
@@ -17,6 +16,7 @@ class VoiceRecorder:
         try:
             import sounddevice
             import soundfile
+
             self.sounddevice = sounddevice
             self.soundfile = soundfile
         except OSError:
@@ -31,9 +31,11 @@ class VoiceRecorder:
             self.openai_client = OpenAI()
 
     def record(self):
-        with self.soundfile.SoundFile(self.soundfile_path, mode='x', samplerate=self.sample_rate, channels=1) as file:
-            with self.sounddevice.InputStream(samplerate=self.sample_rate, channels=1, callback=self.save_sound_callback):
-                print('Press Enter to finish recording')
+        with self.soundfile.SoundFile(self.soundfile_path, mode="x", samplerate=self.sample_rate, channels=1) as file:
+            with self.sounddevice.InputStream(
+                samplerate=self.sample_rate, channels=1, callback=self.save_sound_callback
+            ):
+                print("Press Enter to finish recording")
                 while self.is_recording:
                     file.write(self.recording_queue.get())
 
@@ -61,5 +63,5 @@ class VoiceRecorder:
                 timeout=20,
             )
         os.remove(self.soundfile_path)
-        #print(transcription.text)
+        # print(transcription.text)
         return transcription.text

@@ -23,7 +23,7 @@ Instructions and output format:
 1. Plan the logic:
    Outline the logic algorithm before proposing code changes.
 
-2. Write draft of your logic using pseudocode.
+2. Write draft of your logic using simple pseudocode.
 
 <That's all, do not write more useless text>.
 
@@ -31,3 +31,4 @@ Remember:
 - Keep your response simple. Do not provide any elements except of logic explanation and pseudocode.
 - Plan should be unambiguous. No optional elements allowed. As a strong leader, you are leaving no any space for doubts and free interpretation and taking all responsibility for potential outcomes.
 - If you're unsure how to implement a given task, don't improvise. Simply state that you don't know. Assuming is not allowed - just tell "show me more files" when needed.
+- Keep logic for your future code simple. The simplier logic, the less code - the better.

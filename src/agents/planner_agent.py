@@ -3,7 +3,13 @@ from langchain_core.messages import BaseMessage, HumanMessage, SystemMessage
 from langgraph.graph import StateGraph
 from dotenv import load_dotenv, find_dotenv
 from src.utilities.print_formatters import print_formatted, print_formatted_content_planner
-from src.utilities.util_functions import check_file_contents, convert_images, get_joke, read_coderrules, list_directory_tree
+from src.utilities.util_functions import (
+    check_file_contents,
+    convert_images,
+    get_joke,
+    read_coderrules,
+    list_directory_tree,
+)
 from src.utilities.langgraph_common_functions import after_ask_human_condition
 from src.utilities.user_input import user_input
 from src.utilities.graphics import LoadingAnimation
@@ -40,10 +46,11 @@ with open(f"{parent_dir}/prompts/planner_finalizer.prompt", "r") as f:
 
 animation = LoadingAnimation()
 
+
 # node functions
 def call_simple_planer(state):
     messages = state["messages"]
-    print_formatted(get_joke(), color="green")
+    print_formatted(get_joke(), color="magenta")
     animation.start()
     response = llm_strong.invoke(messages)
     animation.stop()
@@ -62,14 +69,16 @@ def call_simple_planer(state):
 
 def call_advanced_planner(state):
     logic_planner_messages = state["logic_planner_messages"]
-    print_formatted(get_joke(), color="green")
+    print_formatted(get_joke(), color="magenta")
     animation.start()
     logic_pseudocode = llm_strong.invoke(logic_planner_messages)
     print_formatted("\nIntermediate planning done. Finalizing plan...", color="light_magenta")
     if os.getenv("SHOW_LOGIC_PLAN"):
         print_formatted(logic_pseudocode.content, color="light_yellow")
 
-    state["plan_finalizer_messages"].append(HumanMessage(content=f"Logic pseudocode plan to follow:\n\n{logic_pseudocode.content}"))
+    state["plan_finalizer_messages"].append(
+        HumanMessage(content=f"Logic pseudocode plan to follow:\n\n{logic_pseudocode.content}")
+    )
     plan_finalizer_messages = state["plan_finalizer_messages"]
     plan = llm_middle_strength.invoke(plan_finalizer_messages)
     animation.stop()
@@ -83,12 +92,12 @@ def call_advanced_planner(state):
 
 def ask_human_planner(state):
     human_message = user_input("Type (o)k if you accept or provide commentary. ")
-    if human_message in ['o', 'ok']:
+    if human_message in ["o", "ok"]:
         state["messages"].append(HumanMessage(content="Approved by human"))
     else:
-        state["messages"].append(HumanMessage(
-            content=f"Plan been rejected by human. Improve it following his commentary: {human_message}"
-        ))
+        state["messages"].append(
+            HumanMessage(content=f"Plan been rejected by human. Improve it following his commentary: {human_message}")
+        )
     return state
 
 
@@ -109,27 +118,41 @@ def planning(task, text_files, image_paths, work_dir, documentation=None, dir_tr
     if not coderrules:
         coderrules = read_coderrules()
     file_contents = check_file_contents(text_files, work_dir, line_numbers=False)
-    basic_planer_system_message = SystemMessage(content=planer_system_prompt_template.format(project_rules=coderrules, file_contents=file_contents, dir_tree=dir_tree))
-    logic_planer_system_message = SystemMessage(content=logic_planer_system_prompt_template.format(
-        project_rules=coderrules,
-        file_contents=file_contents,
-        dir_tree=dir_tree
-    ))
-    planer_finalizer_system_message = SystemMessage(content=planer_finalizer_prompt_template.format(
-        project_rules=coderrules,
-        file_contents=file_contents,
-    ))
-    print_formatted("📈 Planner here! Create plan of changes with me!", color="light_blue")
+    basic_planer_system_message = SystemMessage(
+        content=planer_system_prompt_template.format(
+            project_rules=coderrules, file_contents=file_contents, dir_tree=dir_tree
+        )
+    )
+    logic_planer_system_message = SystemMessage(
+        content=logic_planer_system_prompt_template.format(
+            project_rules=coderrules, file_contents=file_contents, dir_tree=dir_tree
+        )
+    )
+    planer_finalizer_system_message = SystemMessage(
+        content=planer_finalizer_prompt_template.format(
+            project_rules=coderrules,
+            file_contents=file_contents,
+        )
+    )
+    print_formatted("👨‍💼📈 Planner here! Create plan of changes with me!", color="light_blue")
     images = convert_images(image_paths)
     message_content_without_imgs = f"Task:\n'''{task}'''"
     message_without_imgs = HumanMessage(content=message_content_without_imgs)
-    controller_system_message = SystemMessage(content=files_controller_prompt_template.format(file_contents=file_contents, dir_tree=dir_tree, task=task))
+    controller_system_message = SystemMessage(
+        content=files_controller_prompt_template.format(file_contents=file_contents, dir_tree=dir_tree, task=task)
+    )
 
     inputs = {
-        "messages": [basic_planer_system_message, message_without_imgs,],# documentation],
-        "logic_planner_messages": [logic_planer_system_message, message_without_imgs,],
+        "messages": [
+            basic_planer_system_message,
+            message_without_imgs,
+        ],  # documentation],
+        "logic_planner_messages": [
+            logic_planer_system_message,
+            message_without_imgs,
+        ],
         "plan_finalizer_messages": [planer_finalizer_system_message],
-        "controller_messages": [controller_system_message]
+        "controller_messages": [controller_system_message],
     }
     if images:
         inputs["messages"].append(HumanMessage(content=images))

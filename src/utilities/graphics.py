@@ -8,12 +8,9 @@ from rich.panel import Panel
 from rich.text import Text
 from rich.live import Live
 import threading
-import os
-current = os.path.dirname(os.path.realpath(__file__))
-grandparent = os.path.dirname(os.path.dirname(current))
-sys.path.append(grandparent)
 from src.utilities.print_formatters import print_formatted
 from src.utilities.manager_utils import fetch_tasks
+
 
 def increment_completed_tasks():
     """
@@ -21,6 +18,7 @@ def increment_completed_tasks():
     then writes the updated value back to the file. Returns the new total of tasks completed.
     """
     import os
+
     stats_file = os.path.join(os.getenv("WORK_DIR"), ".clean_coder", "statistics.txt")
     if not os.path.exists(stats_file):
         tasks_completed = 0
@@ -58,19 +56,20 @@ def loading_animation(message="I'm thinking...", color="cyan"):
         "🌑🌑🌑🌑🌑🌑🌒🌓",
         "🌑🌑🌑🌑🌑🌑🌑🌒",
     ]
-    print_formatted(message, color=color, end=' ')  # Print the message with color and stay on the same line
+    print_formatted(message, color=color, end=" ")  # Print the message with color and stay on the same line
     sys.stdout.flush()
-    print('\033[?25l', end='')  # Hide cursor
+    print("\033[?25l", end="")  # Hide cursor
     try:
         for frame in itertools.cycle(frames):
-            print_formatted(frame, color=color,
-                            end='\r' + message + ' ')  # Print the frame on the same line after the message
+            print_formatted(
+                frame, color=color, end="\r" + message + " "
+            )  # Print the frame on the same line after the message
             time.sleep(0.07)  # Adjust the sleep time for better animation speed
             if not loading_animation.is_running:
                 break
     finally:
-        print('\033[?25h', end='')  # Show cursor
-        sys.stdout.write('\r' + ' ' * (len(message) + len(frames[0]) + 2) + '\r')  # Clear the entire line
+        print("\033[?25h", end="")  # Show cursor
+        sys.stdout.write("\r" + " " * (len(message) + len(frames[0]) + 2) + "\r")  # Clear the entire line
         sys.stdout.flush()
 
 
@@ -95,11 +94,7 @@ def task_completed_animation():
 
     # Initial celebration panel
     console.clear()
-    panel = Panel(
-        Text(celebration_art, justify="center"),
-        border_style="bright_yellow",
-        padding=(1, 2)
-    )
+    panel = Panel(Text(celebration_art, justify="center"), border_style="bright_yellow", padding=(1, 2))
     console.print(panel)
 
     # Calculate how many symbols fit in the width (considering each symbol + more spaces takes about 6 characters)
@@ -115,7 +110,7 @@ def task_completed_animation():
                     for _ in range(symbols_per_line)
                 )
                 lines.append(line)
-            
+
             live.update(Text("\n".join(lines), justify="center"))
             sleep(0.05)  # Fast animation
 
@@ -194,7 +189,7 @@ class LoadingAnimation:
             sys.stdout.write("\033[?25h")
             sys.stdout.flush()
             # Clear the entire line
-            sys.stdout.write('\r' + ' ' * (len(self.message) + len(self.frames[0]) + 2) + '\r')
+            sys.stdout.write("\r" + " " * (len(self.message) + len(self.frames[0]) + 2) + "\r")
             sys.stdout.flush()
 
     def start(self):
@@ -219,7 +214,7 @@ class LoadingAnimation:
         self._thread.join()
         self._thread = None
 
-        
+
 def show_progress_bar(completed, total):
     """
     Display a rich progress bar showing task completion status.
@@ -228,26 +223,25 @@ def show_progress_bar(completed, total):
 
     # Calculate percentage
     percentage = (completed / total) * 100
-    
+
     # Create progress bar with rich formatting
     bar_length = 60
     filled_length = int((bar_length * completed) / total)
     bar = "█" * filled_length + "░" * (bar_length - filled_length)
-    
+
     # Create panel with progress information
     progress_panel = Panel(
-        Text(
-            f"{bar} {percentage:.1f}%\n"
-            f"{completed} of {total} tasks completed",
-            justify="center"
-        ),
+        Text(f"{bar} {percentage:.1f}%\n" f"{completed} of {total} tasks completed", justify="center"),
         border_style="green",
         title="[bold cyan]📊 Project Progress",
-        padding=(1, 2)
+        padding=(1, 2),
     )
     console.print(progress_panel)
 
     # Add motivational message with light color
     message = Text("\n✨ ", style="bold")
-    message.append(f"We've completed {completed} of {total} tasks together! Keep up the great work! ✨", style="bold light_magenta")
+    message.append(
+        f"We've completed {completed} of {total} tasks together! Keep up the great work! ✨",
+        style="bold light_magenta",
+    )
     console.print(message)

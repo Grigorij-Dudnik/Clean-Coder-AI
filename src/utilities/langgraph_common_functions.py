@@ -1,21 +1,33 @@
 from langchain_core.messages import HumanMessage
-from src.utilities.print_formatters import print_formatted, print_error, print_formatted_content, print_formatted_content
+from src.utilities.print_formatters import (
+    print_formatted,
+    print_formatted_content,
+)
 from src.utilities.util_functions import invoke_tool_native, TOOL_NOT_EXECUTED_WORD
 from src.utilities.user_input import user_input
 from langgraph.graph import END
 from src.utilities.graphics import LoadingAnimation
-import threading
 import sys
 
 
-multiple_tools_msg = TOOL_NOT_EXECUTED_WORD + """You made multiple tool calls at once. If you want to execute 
+multiple_tools_msg = (
+    TOOL_NOT_EXECUTED_WORD
+    + """You made multiple tool calls at once. If you want to execute 
 multiple actions, choose only one for now; rest you can execute later."""
-no_tools_msg = TOOL_NOT_EXECUTED_WORD + """Please provide a tool call to execute an action."""
+)
+no_tools_msg = (
+    TOOL_NOT_EXECUTED_WORD
+    + """Please provide a tool call to execute an action. If all needed actions are done, you can call 'finish' tool."""
+)
 empty_message_msg = TOOL_NOT_EXECUTED_WORD + "Empty messages are not allowed."
-finish_too_early_msg = TOOL_NOT_EXECUTED_WORD + """You want to call final response with other tool calls. Don't you finishing too early?"""
+finish_too_early_msg = (
+    TOOL_NOT_EXECUTED_WORD
+    + """You want to call final response with other tool calls. Don't you finishing too early?"""
+)
 
 
 animation = LoadingAnimation()
+
 
 # nodes
 def _get_llm_response(llms, messages, printing):
@@ -27,7 +39,7 @@ def _get_llm_response(llms, messages, printing):
                 print_formatted(
                     f"\nException happened: {e} with llm: {llm.bound.__class__.__name__}. "
                     "Switching to next LLM if available...",
-                    color="yellow"
+                    color="yellow",
                 )
     if printing:
         print_formatted("Can not receive response from any llm", color="red")
@@ -49,6 +61,7 @@ def call_model(state, llms, printing=True):
 
     return state
 
+
 def call_tool(state, tools):
     last_message = state["messages"][-1]
     tool_response_messages = [invoke_tool_native(tool_call, tools) for tool_call in last_message.tool_calls]
@@ -58,7 +71,7 @@ def call_tool(state, tools):
 
 def ask_human(state):
     human_message = user_input("Type (o)k to accept or provide commentary. ")
-    if human_message in ['o', 'ok']:
+    if human_message in ["o", "ok"]:
         state["messages"].append(HumanMessage(content="Approved by human"))
     else:
         state["messages"].append(HumanMessage(content=human_message))

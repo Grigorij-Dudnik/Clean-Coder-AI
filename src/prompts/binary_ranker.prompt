@@ -2,7 +2,3 @@ You are a binary ranker. Evaluate if document can contain answer for a given que
 Question: """{question}"""
 Filename: """{filename}"""
 Document: """{document}"""
-
-If the document is relevant to the question, output only '1'. 
-If it may be useful for programmer as contains similar code, but no relevant directly, also output only '1'. 
-If it is not relevant at all, output only '0'.

@@ -11,7 +11,7 @@ recorder = VoiceRecorder()
 def user_input(prompt=""):
     print_formatted(prompt + "Or use (m)icrophone to tell:", color="cyan", bold=True)
     user_sentence = input()
-    if user_sentence == 'm':
+    if user_sentence == "m":
         if not os.getenv("OPENAI_API_KEY"):
             print_formatted("Set OPENAI_API_KEY to use microphone feature.", color="red")
             user_sentence = input()
@@ -24,7 +24,10 @@ def user_input(prompt=""):
                 print(transcription)
                 user_sentence = transcription
         else:
-            print_formatted("Install 'sudo apt-get install libportaudio2' (Linux) or 'brew install portaudio' (Mac) to use microphone feature.", color="red")
+            print_formatted(
+                "Install 'sudo apt-get install libportaudio2' (Linux) or 'brew install portaudio' (Mac) to use microphone feature.",
+                color="red",
+            )
             user_sentence = input()
 
     return user_sentence
@@ -32,7 +35,7 @@ def user_input(prompt=""):
 
 def record_voice_message():
     recorder.start_recording()
-    keyboard.wait('enter', suppress=True)
+    keyboard.wait("enter", suppress=True)
     recorder.stop_recording()
     print_formatted("Recording finished.", color="green")
     return recorder.transcribe_audio()
@@ -42,6 +45,7 @@ def input_with_preinserted_text(text):
     def hook():
         readline.insert_text(text)
         readline.redisplay()
+
     readline.set_pre_input_hook(hook)
     result = input()
     readline.set_pre_input_hook()

@@ -3,10 +3,12 @@ import sys
 
 repo_directory = pathlib.Path(__file__).parents[3].resolve()
 sys.path.append(str(repo_directory))
-from src.agents.executor_agent import Executor
-from non_src.tests.manual_tests.utils_for_tests import cleanup_work_dir
 
-tmp_folder =  pathlib.Path(__file__).parent.resolve().joinpath("sandbox_work_dir")
+from src.agents.executor_agent import Executor  # noqa: E402
+from non_src.tests.manual_tests.utils_for_tests import cleanup_work_dir  # noqa: E402
+
+
+tmp_folder = pathlib.Path(__file__).parent.resolve().joinpath("sandbox_work_dir")
 executor = Executor(set(), str(tmp_folder))
 
 task = "Create fastapi app with few endpoints."

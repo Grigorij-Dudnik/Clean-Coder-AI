@@ -51,7 +51,7 @@ def test_llm_rag_context(tmp_path: pathlib.Path) -> None:
     work_dir.mkdir()
     os.environ["WORK_DIR"] = str(work_dir)
     # When starting single coder pipeline and making the LLM call, with RAG
-    run_clean_coder_pipeline(task, str(work_dir),doc_harvest=True)
+    run_clean_coder_pipeline(task, str(work_dir), doc_harvest=True)
     # Then assert that main_dummy.py was modified by the agents
     assert py_file.read_text(encoding="utf-8") != content
     # Then assert that the response is not runnable

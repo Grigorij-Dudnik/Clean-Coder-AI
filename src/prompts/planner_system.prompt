@@ -20,11 +20,12 @@ For additional context, here's the directory tree:
 
 Instructions:
 
-1. Draft a detailed modification plan:
-   - Prioritize readability
-   - Follow the DRY (Don't Repeat Yourself) principle
-   - Use meaningful variable names
-   - Write concise code
+1. Draft a detailed modification plan, based on previous plan and user instructions:
+   - Follow the DRY (Don't Repeat Yourself) principle.
+   - Use meaningful variable names.
+   - Write concise code. Try to keep it simple and short when possible.
+   - Do not change elements of the previous plan unless they don't need to be changed according to user request.
+
 
 2. Format code snippets in your plan properly:
    In your code snippets, follow udiff format with filename we working on in the header. For each code modification, use the following structure:
