@@ -67,30 +67,10 @@ def test_logs_from_running_script_success(debugger_agent):
         patch("src.utilities.script_execution_utils.run_script_in_env") as mock_run_script,
     ):
         mock_run_script.return_value = ("Success output", "")
-        mock_subprocess_run.return_value = Mock(
-            spec=subprocess.CompletedProcess,
-            returncode=0,
-        )
-        mock_exists.return_value = True
+
         result_state = debugger_agent.logs_from_running_script({"messages": []})
-
-        assert "existing_script.py" in result_state["messages"][-1].content
         assert "Success output" in result_state["messages"][-1].content
-
-
-def test_write_and_append_log():
-    test_message = "Test log message"
-    test_logs_file = "/tmp/test_work/logs.txt"
-
-    with patch("builtins.open", mock_open()) as mocked_file:
-        initial_state = {"messages": []}
-        new_state = write_and_append_log(initial_state, test_message, test_logs_file)
-
-        mocked_file.assert_called_once_with(test_logs_file, "w")
-        mocked_file().write.assert_called_once_with(test_message)
-        assert len(new_state["messages"]) == 1
-        assert isinstance(new_state["messages"][0], HumanMessage)
-        assert test_message in new_state["messages"][0].content
+        assert "[SCRIPT EXECUTION INFO]" in result_state["messages"][-1].content
 
 
 def test_logs_from_running_script_empty_filename(debugger_agent):
@@ -102,7 +82,10 @@ def test_logs_from_running_script_empty_filename(debugger_agent):
         mock_get_filename.return_value = ""
         mock_exists.return_value = True
         mock_run_script.side_effect = subprocess.CalledProcessError(
-            returncode=1, cmd=[], output="", stderr="Error: Not a valid script",
+            returncode=1,
+            cmd=[],
+            output="",
+            stderr="Error: Not a valid script",
         )
 
         result_state = debugger_agent.logs_from_running_script({"messages": []})

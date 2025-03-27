@@ -135,31 +135,27 @@ class Debugger:
 
     def logs_from_running_script(self, state: dict) -> dict:
         """Get logs from running script execution."""
-        file_name = get_executed_filename(state)
-        script_path = os.path.join(self.work_dir, file_name)
-        logs = os.path.join(self.work_dir, "logs.txt")
-        if not os.path.exists(script_path):
-            message = format_log_message(self.work_dir, script_path, is_error=True, error_msg="File not found")
-            return write_and_append_log(state, message, logs)
         try:
+            file_name = get_executed_filename(state, self.work_dir)
+            script_path = os.path.join(self.work_dir, file_name)
             stdout, stderr = run_script_in_env(script_path, self.work_dir)
-            message = format_log_message(
-                self.work_dir,
-                script_path,
-                False,
-                stdout,
-                stderr,
-            )
+            message = format_log_message(stdout=stdout, stderr=stderr)
+            state["messages"].append(HumanMessage(content=message))
         except subprocess.CalledProcessError as e:
+            stdout = e.stdout if hasattr(e, "stdout") else ""
+            stderr = e.stderr if hasattr(e, "stderr") else ""
             message = format_log_message(
-                self.work_dir,
-                script_path,
-                True,
-                f"Script execution failed: {e.stderr}",
-                e.output,
-                e.stderr,
+                stdout=stdout,
+                stderr=stderr,
+                is_error=True,
+                error_msg=f"Script execution failed with return code {e.returncode}",
             )
-        return write_and_append_log(state, message, logs)
+            state["messages"].append(HumanMessage(content=message))
+        except Exception as e:
+            message = format_log_message(is_error=True, error_msg=f"Error: {str(e)}")
+            state["messages"].append(HumanMessage(content=message))
+
+        return state
 
     def frontend_screenshots(self, state):
         print_formatted("Making screenshots, please wait a while...", color="light_blue")
