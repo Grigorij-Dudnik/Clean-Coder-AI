@@ -22,11 +22,10 @@ from src.utilities.util_functions import (
     convert_images,
     list_directory_tree,
 )
-from src.utilities.debugger_utils import (
+from src.utilities.script_execution_utils import (
     run_script_in_env,
     get_executed_filename,
     format_log_message,
-    write_and_append_log,
 )
 from src.utilities.llms import init_llms_medium_intelligence
 from src.utilities.langgraph_common_functions import (
@@ -119,11 +118,8 @@ class Debugger:
                         file.is_modified = True
                         break
             elif tool_call["name"] == "final_response_debugger":
-                files_to_check = [file for file in self.files if file.filename.endswith(".py") and file.is_modified]
-                analysis_result = python_static_analysis(files_to_check)
-                if analysis_result:
-                    state["messages"].append(HumanMessage(content=analysis_result))
-
+                if debugger_execute_code:
+                    state = self.logs_from_running_script(state)
 
         return state
 
@@ -136,31 +132,27 @@ class Debugger:
 
     def logs_from_running_script(self, state: dict) -> dict:
         """Get logs from running script execution."""
-        file_name = get_executed_filename(state)
-        script_path = os.path.join(self.work_dir, file_name)
-        logs = os.path.join(self.work_dir, "logs.txt")
-        if not os.path.exists(script_path):
-            message = format_log_message(self.work_dir, script_path, is_error=True, error_msg="File not found")
-            return write_and_append_log(state, message, logs)
         try:
+            file_name = get_executed_filename(state, self.work_dir)
+            script_path = os.path.join(self.work_dir, file_name)
             stdout, stderr = run_script_in_env(script_path, self.work_dir)
-            message = format_log_message(
-                self.work_dir,
-                script_path,
-                False,
-                stdout,
-                stderr,
-            )
+            message = format_log_message(stdout=stdout, stderr=stderr)
+            state["messages"].append(HumanMessage(content=message))
         except subprocess.CalledProcessError as e:
+            stdout = e.stdout if hasattr(e, "stdout") else ""
+            stderr = e.stderr if hasattr(e, "stderr") else ""
             message = format_log_message(
-                self.work_dir,
-                script_path,
-                True,
-                f"Script execution failed: {e.stderr}",
-                e.output,
-                e.stderr,
+                stdout=stdout,
+                stderr=stderr,
+                is_error=True,
+                error_msg=f"Script execution failed with return code {e.returncode}",
             )
-        return write_and_append_log(state, message, logs)
+            state["messages"].append(HumanMessage(content=message))
+        except Exception as e:
+            message = format_log_message(is_error=True, error_msg=f"Error: {str(e)}")
+            state["messages"].append(HumanMessage(content=message))
+
+        return state
 
     def frontend_screenshots(self, state):
         print_formatted("Making screenshots, please wait a while...", color="light_blue")
@@ -190,12 +182,8 @@ class Debugger:
 
     def after_check_log_condition(self, state):
         last_message = state["messages"][-1]
-        if bad_tool_call_looped(state):
-            return "human_help"
-        elif hasattr(last_message, "tool_calls") and last_message.tool_calls[0]["name"] == "final_response_debugger":
-            if log_file_path:
-                return "check_log"
-            elif self.playwright_code:
+        if last_message.content.endswith("Logs are correct"):
+            if self.playwright_code:
                 return "frontend_screenshots"
             else:
                 return "human_end_process_confirmation"

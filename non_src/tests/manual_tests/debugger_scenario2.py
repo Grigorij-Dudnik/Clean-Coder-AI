@@ -20,7 +20,6 @@ from src.utilities.start_work_functions import file_folder_ignored  # noqa: E402
 # Constants
 CODERIGNORE_PATTERNS = ("*.log", "*.pyc", "__pycache__")
 ENV_DIR_NAME = "env"
-LOGS_FILE_NAME = "logs.txt"
 
 # Type aliases
 PathLike = Path | str
@@ -150,9 +149,7 @@ def main_test_flow() -> None:
 
         # Verification checks
         env_path = workspace / ENV_DIR_NAME
-        logs_path = workspace / LOGS_FILE_NAME
         assert env_path.exists(), "Virtual environment not created"
-        assert logs_path.exists(), "Log file missing"
 
         logger.info(f"Updated state: {updated_state}")
         assert "Hello World!" in updated_state["messages"][-1].content, "Missing expected output"
