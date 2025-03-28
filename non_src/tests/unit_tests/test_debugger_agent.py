@@ -61,10 +61,8 @@ def test_run_script_error(debugger_agent: Debugger):
 
 def test_logs_from_running_script_file_not_found(debugger_agent: Debugger):
     with (
-        patch("src.agents.debugger_agent.get_executed_filename") as mock_get_filename,
         patch("src.agents.debugger_agent.run_script_in_env") as mock_run_script,
     ):
-        mock_get_filename.return_value = "non_existent.py"
         mock_run_script.side_effect = FileNotFoundError(f"No such file: 'non_existent.py'")
 
         result_state = debugger_agent.logs_from_running_script({"messages": []})
@@ -73,10 +71,8 @@ def test_logs_from_running_script_file_not_found(debugger_agent: Debugger):
 
 def test_logs_from_running_script_success(debugger_agent: Debugger):
     with (
-        patch("src.agents.debugger_agent.get_executed_filename") as mock_get_filename,
         patch("src.agents.debugger_agent.run_script_in_env") as mock_run_script,
     ):
-        mock_get_filename.return_value = "existing_script.py"
         mock_run_script.return_value = ("Success output", "")
 
         result_state = debugger_agent.logs_from_running_script({"messages": []})
@@ -86,11 +82,9 @@ def test_logs_from_running_script_success(debugger_agent: Debugger):
 
 def test_logs_from_running_script_empty_filename(debugger_agent: Debugger):
     with (
-        patch("src.agents.debugger_agent.get_executed_filename") as mock_get_filename,
         patch("os.path.exists") as mock_exists,
         patch("src.agents.debugger_agent.run_script_in_env") as mock_run_script,
     ):
-        mock_get_filename.return_value = ""
         mock_exists.return_value = True
         mock_run_script.side_effect = subprocess.CalledProcessError(
             returncode=1,
@@ -105,11 +99,9 @@ def test_logs_from_running_script_empty_filename(debugger_agent: Debugger):
 
 def test_logs_from_running_script_run_script_error(debugger_agent: Debugger):
     with (
-        patch("src.agents.debugger_agent.get_executed_filename") as mock_get_filename,
         patch("os.path.exists") as mock_exists,
         patch("src.agents.debugger_agent.run_script_in_env") as mock_run_script,
     ):
-        mock_get_filename.return_value = "existing_script.py"
         mock_exists.return_value = True
         mock_run_script.side_effect = subprocess.CalledProcessError(
             returncode=1,

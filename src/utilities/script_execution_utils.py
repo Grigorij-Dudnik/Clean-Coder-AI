@@ -42,26 +42,3 @@ def format_log_message(stdout: str = "", stderr: str = "", is_error: bool = Fals
         message += f"STDERR:\n{stderr}\n"
 
     return message
-
-
-def get_executed_filename(state: dict, work_dir: str = "") -> str:
-    """Extract filename of the executed script from message history.
-
-    Searches through messages for a line starting with 'File contents:'
-    followed by the filename. If work_dir is provided, checks if the file exists.
-
-    Returns the first existing file or the first found filename if none exist.
-    """
-    found_filenames = []
-    for message in state.get("messages", []):
-        if isinstance(message.content, str) and "File contents:" in message.content:
-            header_line = message.content.splitlines()[0]
-            if header_line.startswith("File contents:"):
-                parts = header_line.split("File contents:")[-1].split(":")
-                filename = parts[0].strip()
-                found_filenames.append(filename)
-
-                if work_dir and os.path.exists(os.path.join(work_dir, filename)):
-                    return filename
-
-    return found_filenames[0] if found_filenames else ""

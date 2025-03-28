@@ -24,7 +24,6 @@ from src.utilities.util_functions import (
 )
 from src.utilities.script_execution_utils import (
     run_script_in_env,
-    get_executed_filename,
     format_log_message,
 )
 from src.utilities.llms import init_llms_medium_intelligence
@@ -45,6 +44,7 @@ load_dotenv(find_dotenv())
 log_file_path = os.getenv("LOG_FILE")
 frontend_url = os.getenv("FRONTEND_URL")
 debugger_execute_code = os.getenv("DEBUGGER_EXECUTE_CODE")
+execute_file_name = os.getenv("EXECUTE_FILE_NAME")
 
 
 @tool
@@ -133,8 +133,8 @@ class Debugger:
     def logs_from_running_script(self, state: dict) -> dict:
         """Get logs from running script execution."""
         try:
-            file_name = get_executed_filename(state, self.work_dir)
-            script_path = os.path.join(self.work_dir, file_name)
+            print(f"testtesttets: {self.work_dir=}, {execute_file_name=}")
+            script_path = os.path.join(self.work_dir, execute_file_name)
             stdout, stderr = run_script_in_env(script_path, self.work_dir)
             message = format_log_message(stdout=stdout, stderr=stderr)
             state["messages"].append(HumanMessage(content=message))
