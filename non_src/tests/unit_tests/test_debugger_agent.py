@@ -75,11 +75,9 @@ def test_logs_from_running_script_success(debugger_agent):
 
 def test_logs_from_running_script_empty_filename(debugger_agent):
     with (
-        patch("src.agents.debugger_agent.get_executed_filename") as mock_get_filename,
         patch("os.path.exists") as mock_exists,
         patch("src.agents.debugger_agent.run_script_in_env") as mock_run_script,
     ):
-        mock_get_filename.return_value = ""
         mock_exists.return_value = True
         mock_run_script.side_effect = subprocess.CalledProcessError(
             returncode=1,

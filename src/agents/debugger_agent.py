@@ -136,8 +136,8 @@ class Debugger:
     def logs_from_running_script(self, state: dict) -> dict:
         """Get logs from running script execution."""
         try:
-            file_name = get_executed_filename(state, self.work_dir)
-            script_path = os.path.join(self.work_dir, file_name)
+            print(f"testtesttets: {self.work_dir=}, {execute_file_name=}")
+            script_path = os.path.join(self.work_dir, execute_file_name)
             stdout, stderr = run_script_in_env(script_path, self.work_dir)
             message = format_log_message(stdout=stdout, stderr=stderr)
             state["messages"].append(HumanMessage(content=message))
