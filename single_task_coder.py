@@ -1,5 +1,6 @@
 if __name__ == "__main__":
     from src.utilities.start_work_functions import print_ascii_logo
+
     print_ascii_logo()
 from dotenv import find_dotenv
 from src.utilities.set_up_dotenv import set_up_env_coder_pipeline
@@ -21,9 +22,12 @@ from src.utilities.util_functions import create_frontend_feedback_story
 from src.tools.rag.index_file_descriptions import prompt_index_project_files, upsert_file_list
 from src.tools.rag.retrieval import vdb_available
 from src.linters.static_analisys import python_static_analysis
+from src.utilities.script_execution_utils import logs_from_running_script
 
 
 use_frontend_feedback = bool(os.getenv("FRONTEND_URL"))
+execute_code = os.getenv("EXECUTE_CODE", False)
+execute_file_name = os.getenv("EXECUTE_FILE_NAME", "main.py")
 
 
 def _update_file_descriptions(files):
@@ -56,18 +60,35 @@ def run_clean_coder_pipeline(task: str, work_dir: str, doc_harvest: bool = False
     else:
         files = executor.do_task(task, plan)
 
+    # Execute the script and collect logs
+    execution_message = None
+    if execute_code and os.path.exists(os.path.join(work_dir, execute_file_name)):
+        execution_message = logs_from_running_script(work_dir, execute_file_name)
+
     # static analysis
     files_to_check = [file for file in files if file.filename.endswith(".py") and file.is_modified]
     analysis_result = python_static_analysis(files_to_check)
+
     if analysis_result:
         # Automatically proceed to debugger with static analysis results
         human_message = analysis_result
+        if execution_message:
+            human_message = execution_message + "\n\n" + human_message
     else:
+        # If we have logs of the script execution, add them to the message
+        if execution_message:
+            print(execution_message)
+
         # No static analysis issues - ask for user input
-        human_message = user_input("Please test app and provide commentary if debugging/additional refinement is needed. ")
+        human_message = user_input(
+            "Please test app and provide commentary if debugging/additional refinement is needed. "
+        )
         if human_message in ["o", "ok"]:
             _update_file_descriptions(files)
-        return 
+            return
+
+        if execution_message and human_message not in ["o", "ok"]:
+            human_message = execution_message + "\n\n" + human_message
 
     _update_file_descriptions(files)
 

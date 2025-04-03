@@ -42,3 +42,23 @@ def format_log_message(stdout: str = "", stderr: str = "", is_error: bool = Fals
         message += f"STDERR:\n{stderr}\n"
 
     return message
+
+
+def logs_from_running_script(work_dir: str, execute_file_name: str) -> str:
+    """Get logs from running script execution."""
+    try:
+        script_path = os.path.join(work_dir, execute_file_name)
+        stdout, stderr = run_script_in_env(script_path, work_dir)
+        return format_log_message(stdout=stdout, stderr=stderr)
+    except subprocess.CalledProcessError as e:
+        stdout = e.stdout if hasattr(e, "stdout") else ""
+        stderr = e.stderr if hasattr(e, "stderr") else ""
+        message = format_log_message(
+            stdout=stdout,
+            stderr=stderr,
+            is_error=True,
+            error_msg=f"Script execution failed with return code {e.returncode}",
+        )
+        return message
+    except Exception as e:
+        return format_log_message(is_error=True, error_msg=f"Error: {str(e)}")

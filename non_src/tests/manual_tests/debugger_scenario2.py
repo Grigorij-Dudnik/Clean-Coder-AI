@@ -16,6 +16,7 @@ from dotenv import find_dotenv, load_dotenv  # noqa: E402
 from non_src.tests.manual_tests.utils_for_tests import cleanup_work_dir, setup_work_dir  # noqa: E402
 from src.agents.debugger_agent import Debugger  # noqa: E402
 from src.utilities.start_work_functions import file_folder_ignored  # noqa: E402
+from src.utilities.script_execution_utils import logs_from_running_script
 
 # Constants
 CODERIGNORE_PATTERNS = ("*.log", "*.pyc", "__pycache__")
@@ -139,13 +140,21 @@ def main_test_flow() -> None:
             image_paths=[],
         )
 
+        # Check if main.py exists and create it if needed
+        main_py_path = workspace / "main.py"
+        if not main_py_path.exists():
+            main_py_path.write_text("print('Hello World!')")
+
         test_state = {
             "messages": [
-                HumanMessage(content="File contents: sample_test.py:\n\nprint('Hello World!')\n"),
+                HumanMessage(content=f"File contents: main.py:\n\n{main_py_path.read_text()}\n"),
             ],
         }
 
-        updated_state = debugger.logs_from_running_script(test_state)
+        # Execute main.py and collect logs
+        message = logs_from_running_script(str(workspace), "main.py")
+        test_state["messages"].append(HumanMessage(content=message))
+        updated_state = test_state
 
         # Verification checks
         env_path = workspace / ENV_DIR_NAME

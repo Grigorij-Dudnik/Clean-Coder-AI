@@ -22,10 +22,7 @@ from src.utilities.util_functions import (
     convert_images,
     list_directory_tree,
 )
-from src.utilities.script_execution_utils import (
-    run_script_in_env,
-    format_log_message,
-)
+from src.utilities.script_execution_utils import logs_from_running_script
 from src.utilities.llms import init_llms_medium_intelligence
 from src.utilities.langgraph_common_functions import (
     call_model,
@@ -43,7 +40,7 @@ from src.linters.static_analisys import python_static_analysis
 load_dotenv(find_dotenv())
 log_file_path = os.getenv("LOG_FILE")
 frontend_url = os.getenv("FRONTEND_URL")
-debugger_execute_code = os.getenv("DEBUGGER_EXECUTE_CODE")
+execute_code = os.getenv("EXECUTE_CODE")
 execute_file_name = os.getenv("EXECUTE_FILE_NAME")
 
 
@@ -118,8 +115,9 @@ class Debugger:
                         file.is_modified = True
                         break
             elif tool_call["name"] == "final_response_debugger":
-                if debugger_execute_code:
-                    state = self.logs_from_running_script(state)
+                if execute_code:
+                    message = logs_from_running_script(self.work_dir)
+                    state["messages"].append(HumanMessage(content=message))
 
         return state
 
@@ -128,30 +126,6 @@ class Debugger:
         logs = check_application_logs()
         log_message = HumanMessage(content="Logs:\n" + logs)
         state["messages"].append(log_message)
-        return state
-
-    def logs_from_running_script(self, state: dict) -> dict:
-        """Get logs from running script execution."""
-        try:
-            print(f"testtesttets: {self.work_dir=}, {execute_file_name=}")
-            script_path = os.path.join(self.work_dir, execute_file_name)
-            stdout, stderr = run_script_in_env(script_path, self.work_dir)
-            message = format_log_message(stdout=stdout, stderr=stderr)
-            state["messages"].append(HumanMessage(content=message))
-        except subprocess.CalledProcessError as e:
-            stdout = e.stdout if hasattr(e, "stdout") else ""
-            stderr = e.stderr if hasattr(e, "stderr") else ""
-            message = format_log_message(
-                stdout=stdout,
-                stderr=stderr,
-                is_error=True,
-                error_msg=f"Script execution failed with return code {e.returncode}",
-            )
-            state["messages"].append(HumanMessage(content=message))
-        except Exception as e:
-            message = format_log_message(is_error=True, error_msg=f"Error: {str(e)}")
-            state["messages"].append(HumanMessage(content=message))
-
         return state
 
     def frontend_screenshots(self, state):
