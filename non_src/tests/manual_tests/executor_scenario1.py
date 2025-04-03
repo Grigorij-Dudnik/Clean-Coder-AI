@@ -7,6 +7,7 @@ sys.path.append(str(repo_directory))
 from dotenv import find_dotenv, load_dotenv  # noqa: E402
 from src.agents.executor_agent import Executor  # noqa: E402
 from non_src.tests.manual_tests.utils_for_tests import cleanup_work_dir, setup_work_dir  # noqa: E402
+from src.utilities.objects import CodeFile  # noqa: E402
 
 load_dotenv(find_dotenv())
 
@@ -15,7 +16,7 @@ folder_with_project_files = repo_directory.joinpath(
 )
 tmp_folder = pathlib.Path(__file__).parent.resolve().joinpath("sandbox_work_dir")
 setup_work_dir(manual_tests_folder=tmp_folder, test_files_dir=folder_with_project_files)
-executor = Executor({"main.py"}, str(tmp_folder))
+executor = Executor({CodeFile("main.py")}, str(tmp_folder))
 
 task = "Create fastapi app with few endpoints."
 plan = """1. Create registration_logic.py file:

@@ -38,9 +38,9 @@ bar_format = (
 # embedding_function = embedding_functions.SentenceTransformerEmbeddingFunction(
 #     model_name="all-mpnet-base-v2"
 # )
-embedding_function = embedding_functions.OpenAIEmbeddingFunction(
-    api_key=os.getenv("OPENAI_API_KEY"), model_name="text-embedding-3-small"
-)
+# embedding_function = embedding_functions.OpenAIEmbeddingFunction(
+#     api_key=os.getenv("OPENAI_API_KEY"), model_name="text-embedding-3-small"
+# )
 
 
 def is_code_file(file_path):
@@ -221,6 +221,7 @@ def upsert_file_list(file_list):
 
     docs = []
     ids = []
+    print(f"file_list: {file_list}")
     # open every file starting with descriptions_folder/file and add content to list
     for file in file_list:
         pattern = os.path.join(descriptions_folder, f"{file.filename.replace('/', '=').removesuffix('.txt')}*")
@@ -230,7 +231,7 @@ def upsert_file_list(file_list):
             file_path = Path(file_path)
             docs.append(content)
             ids.append(file_path.name.replace("=", "/").removesuffix(".txt"))
-
+    print(f"ids: {ids}")
     collection.upsert(documents=docs, ids=ids)
     print_formatted("Re-indexing of modified files completed.", color="green")
 
@@ -265,7 +266,6 @@ def write_and_index_descriptions(file_list):
     # provide optionally which subfolders needs to be checked, if you don't want to describe all project folder
     write_file_descriptions(file_list)
     write_file_chunks_descriptions(file_list)
-
     upload_descriptions_to_vdb()
 
 

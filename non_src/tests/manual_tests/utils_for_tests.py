@@ -3,6 +3,7 @@
 import os
 import shutil
 from pathlib import Path
+from src.utilities.objects import CodeFile
 
 
 # def setup_work_dir(project_files_folder):
@@ -19,16 +20,16 @@ def cleanup_work_dir(manual_tests_folder: Path) -> None:
     shutil.rmtree(str(manual_tests_folder))
 
 
-def get_filenames_in_folder(manual_tests_folder: Path) -> set[str]:
+def get_files_in_folder(manual_tests_folder: Path) -> set[CodeFile]:
     """Lists files in directory."""
     # Initialize an empty set to store filenames
-    filenames = set()
+    files = set()
 
     # List all files in the directory
-    for file in os.listdir(manual_tests_folder):
-        file_path = os.path.join(manual_tests_folder, file)
+    for filename in os.listdir(manual_tests_folder):
+        file_path = os.path.join(manual_tests_folder, filename)
         if Path(file_path).is_file():
             # Add the filename to the set
-            filenames.add(file)
+            files.add(CodeFile(filename))
 
-    return filenames
+    return files

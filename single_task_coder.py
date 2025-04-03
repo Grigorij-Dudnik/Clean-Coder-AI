@@ -33,9 +33,7 @@ execute_file_name = os.getenv("EXECUTE_FILE_NAME", "main.py")
 def _update_file_descriptions(files):
     """Update vector database with descriptions of modified files."""
     if vdb_available():
-        modified_files = [file for file in files if file.is_modified]
-        if modified_files:
-            upsert_file_list(modified_files)
+        upsert_file_list([file for file in files if file.is_modified])
 
 
 def run_clean_coder_pipeline(task: str, work_dir: str, doc_harvest: bool = False):
@@ -92,9 +90,11 @@ def run_clean_coder_pipeline(task: str, work_dir: str, doc_harvest: bool = False
 
     _update_file_descriptions(files)
 
+
     debugger = Debugger(files, work_dir, human_message, image_paths, playwright_codes)
     files = debugger.do_task(task, plan)
     _update_file_descriptions(files)
+
 
 
 if __name__ == "__main__":

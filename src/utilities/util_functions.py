@@ -1,6 +1,4 @@
-import re
 import os
-import xml.etree.ElementTree as ET
 import base64
 import mimetypes
 import requests
@@ -48,6 +46,10 @@ For being logged in as admin user, use username="frontend.feedback@admin", passw
 
 
 def check_file_contents(files, work_dir, line_numbers=True):
+    """
+    Retrieves and formats the contents of multiple files with their filenames as headers.
+    Can include line numbers in the output for easier reference when modifying code.
+    """
     file_contents = f"Files shown: {[str(f) for f in files]}\n\n"
     for file_name in files:
         file_content = watch_file(file_name.filename, work_dir, line_numbers)
@@ -82,24 +84,6 @@ def watch_file(filename, work_dir, line_numbers=True):
     file_content = "".join(formatted_lines)
     file_content = f"{filename}:\n\n{file_content}"
     return file_content
-
-def find_tool_xml(input_str):
-    match = re.search("```xml(.*?)```", input_str, re.DOTALL)
-    if match:
-        root = ET.fromstring(match.group(1).strip())
-        tool = root.find("tool").text.strip()
-        tool_input_element = root.find("tool_input")
-        tool_input = {}
-        for child in tool_input_element:
-            child.text = child.text.strip()
-            if list(child):
-                tool_input[child.tag] = [item.text for item in child]
-            else:
-                tool_input[child.tag] = child.text
-        # output = {child.tag: child.text for child in root}
-        return {"tool": tool, "tool_input": tool_input}
-    else:
-        return None
 
 
 def check_application_logs():
@@ -141,6 +125,10 @@ def convert_images(image_paths):
 
 
 def join_paths(*args):
+    """
+    Joins multiple path components while preserving leading slashes and normalizing the result.
+    Handles both absolute and relative paths correctly, ensuring consistent path formatting.
+    """
     leading_slash = "/" if args[0].startswith("/") else ""
     joined = leading_slash + "/".join(p.strip("/") for p in args)
     return os.path.normpath(joined)
@@ -251,6 +239,17 @@ def create_coderrules(coderrules_path):
         file.write(rules)
     print_formatted("Project rules saved. You can edit it in .coderrules file.", color="green")
     return rules
+
+def load_prompt(prompt_name):
+    """Load a prompt file
+
+    prompt_name: name of the prompt file, without .prompt extension.
+    """
+    parent_dir = os.path.dirname(os.path.dirname(os.path.realpath(__file__)))
+    prompt_path = os.path.join(parent_dir, "prompts", f"{prompt_name}.prompt")
+    with open(prompt_path, "r") as f:
+        return f.read()
+
 
 
 def load_prompt(prompt_name):

@@ -1,7 +1,6 @@
 """
 In manager_utils.py we are placing all functions used by manager agent only, which are not tools.
 """
-
 from langchain_core.messages import HumanMessage, SystemMessage, ToolMessage, AIMessage
 from src.utilities.llms import init_llms_medium_intelligence
 from src.utilities.util_functions import join_paths, read_coderrules, list_directory_tree, load_prompt
@@ -40,6 +39,7 @@ QUESTIONARY_STYLE = questionary.Style(
         ("instruction", "fg:#FFD700"),  # Additional instructions now in golden yellow (hex color)
     ]
 )
+
 
 
 actualize_progress_description_prompt_template = load_prompt("actualize_progress_description")

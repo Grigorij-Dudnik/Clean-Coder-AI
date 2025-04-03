@@ -1,4 +1,3 @@
-import os
 from src.tools.tools_coder_pipeline import (
     ask_human_tool,
     prepare_create_file_tool,
@@ -6,13 +5,14 @@ from src.tools.tools_coder_pipeline import (
     prepare_insert_code_tool,
 )
 from typing import TypedDict, Sequence, List
+from typing_extensions import Annotated
 from langchain_core.messages import BaseMessage, HumanMessage, SystemMessage, ToolMessage
 from langgraph.graph import StateGraph, END
 from dotenv import load_dotenv, find_dotenv
 from langchain.tools import tool
 from src.utilities.llms import init_llms_medium_intelligence
 from src.utilities.print_formatters import print_formatted
-from src.utilities.util_functions import check_file_contents, exchange_file_contents, bad_tool_call_looped
+from src.utilities.util_functions import check_file_contents, exchange_file_contents, bad_tool_call_looped, load_prompt
 from src.utilities.langgraph_common_functions import (
     call_model,
     call_tool,
@@ -25,13 +25,11 @@ from src.utilities.objects import CodeFile
 
 load_dotenv(find_dotenv())
 
-
 @tool
-def final_response_executor(test_instruction):
-    """Call that tool when all plan steps are implemented to finish your job.
-    tool input:
-    :param test_instruction: write detailed instruction for human what actions he need to do in order to check if
-    implemented changes work correctly."""
+def final_response_executor(
+    test_instruction: Annotated[str, "Detailed instructions for human to test implemented changes"]
+):
+    """Call that tool when all plan steps are implemented to finish your job."""
     pass
 
 
@@ -39,11 +37,7 @@ class AgentState(TypedDict):
     messages: Sequence[BaseMessage]
 
 
-parent_dir = os.path.dirname(os.path.dirname(os.path.realpath(__file__)))
-
-with open(f"{parent_dir}/prompts/executor_system.prompt", "r") as f:
-    system_prompt_template = f.read()
-
+system_prompt_template = load_prompt("executor_system")
 
 class Executor:
     def __init__(self, files, work_dir):
@@ -95,7 +89,6 @@ class Executor:
                     if file.filename == filename:
                         file.is_modified = True
                         break
-
 
         state = exchange_file_contents(state, self.files, self.work_dir)
 

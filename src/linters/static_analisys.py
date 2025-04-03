@@ -8,12 +8,9 @@ load_dotenv(find_dotenv())
 
 
 def python_static_analysis(files):
-    # Run Ruff to lint a /directory
-    #result = subprocess.run(["ruff", "check", os.getenv("WORK_DIR"), "--config", "ruff-rules.toml"], capture_output=True, text=True, encoding="utf-8")
-    # Run Ruff to lint a files
     outputs = ""
     for file in files:
-        command = ["ruff", "check", join_paths(os.getenv("WORK_DIR"), file.filename), "--config", "ruff-rules.toml"]
+        command = ["ruff", "check", join_paths(os.getenv("WORK_DIR"), file.filename), "--config", "src/linters/ruff-rules.toml"]
         result = subprocess.run(command, capture_output=True, text=True, encoding="utf-8")
         if result.stdout.strip() != "All checks passed!":
             outputs += f"\n\n---\n{file.filename}:\n\n{result.stdout}"
@@ -27,5 +24,7 @@ def python_static_analysis(files):
 # print("Exit Code:", result.returncode)
 
 if __name__ == "__main__":
-    file_list = ["manager.py",]
+    from src.utilities.objects import CodeFile
+    manager_file = CodeFile("src/agents/planer.py")
+    file_list = [manager_file]
     print(python_static_analysis(file_list))

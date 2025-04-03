@@ -6,7 +6,7 @@ sys.path.append(str(repo_directory))
 
 from dotenv import find_dotenv, load_dotenv  # noqa: E402
 from src.agents.planner_agent import planning  # noqa: E402
-from non_src.tests.manual_tests.utils_for_tests import cleanup_work_dir, get_filenames_in_folder, setup_work_dir  # noqa: E402
+from non_src.tests.manual_tests.utils_for_tests import cleanup_work_dir, get_files_in_folder, setup_work_dir  # noqa: E402
 
 load_dotenv(find_dotenv())
 
@@ -17,7 +17,7 @@ tmp_folder = pathlib.Path(__file__).parent.resolve().joinpath("sandbox_work_dir"
 setup_work_dir(manual_tests_folder=tmp_folder, test_files_dir=folder_with_project_files)
 
 task = "Make form wider, with green background. Improve styling."
-files = get_filenames_in_folder(manual_tests_folder=tmp_folder)
+files = get_files_in_folder(manual_tests_folder=tmp_folder)
 
 planning(task, files, image_paths={}, work_dir=str(tmp_folder))
 cleanup_work_dir(manual_tests_folder=tmp_folder)

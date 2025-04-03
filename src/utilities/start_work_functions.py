@@ -16,6 +16,10 @@ def read_frontend_feedback_story():
 
 
 def file_folder_ignored(path):
+    """
+    Determines if a file or folder should be ignored based on patterns in .coderignore.
+    Uses both PathSpec matching and fnmatch pattern matching for backwards compatibility.
+    """
     path = path.rstrip("/")  # Remove trailing slash if present
     spec = PathSpec.from_lines(GitWildMatchPattern, CoderIgnore.get_forbidden())
     if spec.match_file(path):

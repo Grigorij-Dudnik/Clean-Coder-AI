@@ -9,7 +9,7 @@ from src.tools.tools_coder_pipeline import (
     retrieve_files_by_semantic_query,
 )
 from src.tools.rag.retrieval import vdb_available
-from src.utilities.util_functions import list_directory_tree
+from src.utilities.util_functions import list_directory_tree, load_prompt
 from src.utilities.langgraph_common_functions import call_model, call_tool, no_tools_msg
 from src.utilities.llms import init_llms_mini
 import os
@@ -37,11 +37,7 @@ class AgentState(TypedDict):
     messages: Sequence[BaseMessage]
 
 
-parent_dir = os.path.dirname(os.path.dirname(os.path.realpath(__file__)))
-with open(f"{parent_dir}/prompts/researcher_file_answerer.prompt", "r") as f:
-    system_prompt_template = f.read()
-
-
+system_prompt_template = load_prompt("researcher_file_answerer")
 # Logic for conditional edges
 def after_agent_condition(state):
     last_message = state["messages"][-1]

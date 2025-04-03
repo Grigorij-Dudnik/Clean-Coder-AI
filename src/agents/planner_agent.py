@@ -14,6 +14,7 @@ from src.utilities.langgraph_common_functions import after_ask_human_condition
 from src.utilities.user_input import user_input
 from src.utilities.graphics import LoadingAnimation
 from src.utilities.llms import init_llms_high_intelligence, init_llms_mini, init_llms_medium_intelligence
+from src.utilities.util_functions import load_prompt
 import os
 
 
@@ -34,15 +35,10 @@ class AgentState(TypedDict):
     controller_messages: Sequence[BaseMessage]
 
 
-parent_dir = os.path.dirname(os.path.dirname(os.path.realpath(__file__)))
-with open(f"{parent_dir}/prompts/planner_system.prompt", "r") as f:
-    planer_system_prompt_template = f.read()
-with open(f"{parent_dir}/prompts/planner_files_controller.prompt", "r") as f:
-    files_controller_prompt_template = f.read()
-with open(f"{parent_dir}/prompts/planner_logic_pseudocode.prompt", "r") as f:
-    logic_planer_system_prompt_template = f.read()
-with open(f"{parent_dir}/prompts/planner_finalizer.prompt", "r") as f:
-    planer_finalizer_prompt_template = f.read()
+planer_system_prompt_template = load_prompt("planner_system")
+files_controller_prompt_template = load_prompt("planner_files_controller") 
+logic_planer_system_prompt_template = load_prompt("planner_logic_pseudocode")
+planer_finalizer_prompt_template = load_prompt("planner_finalizer")
 
 animation = LoadingAnimation()
 
@@ -134,6 +130,7 @@ def planning(task, text_files, image_paths, work_dir, documentation=None, dir_tr
             file_contents=file_contents,
         )
     )
+
     print_formatted("👨‍💼📈 Planner here! Create plan of changes with me!", color="light_blue")
     images = convert_images(image_paths)
     message_content_without_imgs = f"Task:\n'''{task}'''"
