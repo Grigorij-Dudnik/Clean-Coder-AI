@@ -68,15 +68,14 @@ def test_logs_from_running_script_success(debugger_agent):
     ):
         mock_run_script.return_value = ("Success output", "")
 
-        result_state = debugger_agent.logs_from_running_script({"messages": []})
-        assert "Success output" in result_state["messages"][-1].content
-        assert "[SCRIPT EXECUTION INFO]" in result_state["messages"][-1].content
+        result = logs_from_running_script(temp_work_dir, "test_script.py")
+        assert "Success output" in result
+        assert "[SCRIPT EXECUTION INFO]" in result
 
 
 def test_logs_from_running_script_empty_filename(debugger_agent):
     with (
-        patch("os.path.exists") as mock_exists,
-        patch("src.agents.debugger_agent.run_script_in_env") as mock_run_script,
+        patch("src.utilities.script_execution_utils.run_script_in_env") as mock_run_script,
     ):
         mock_exists.return_value = True
         mock_run_script.side_effect = subprocess.CalledProcessError(

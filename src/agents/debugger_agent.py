@@ -133,30 +133,6 @@ class Debugger:
         state["messages"].append(log_message)
         return state
 
-    def logs_from_running_script(self, state: dict) -> dict:
-        """Get logs from running script execution."""
-        try:
-            print(f"testtesttets: {self.work_dir=}, {execute_file_name=}")
-            script_path = os.path.join(self.work_dir, execute_file_name)
-            stdout, stderr = run_script_in_env(script_path, self.work_dir)
-            message = format_log_message(stdout=stdout, stderr=stderr)
-            state["messages"].append(HumanMessage(content=message))
-        except subprocess.CalledProcessError as e:
-            stdout = e.stdout if hasattr(e, "stdout") else ""
-            stderr = e.stderr if hasattr(e, "stderr") else ""
-            message = format_log_message(
-                stdout=stdout,
-                stderr=stderr,
-                is_error=True,
-                error_msg=f"Script execution failed with return code {e.returncode}",
-            )
-            state["messages"].append(HumanMessage(content=message))
-        except Exception as e:
-            message = format_log_message(is_error=True, error_msg=f"Error: {str(e)}")
-            state["messages"].append(HumanMessage(content=message))
-
-        return state
-
     def frontend_screenshots(self, state):
         print_formatted("Making screenshots, please wait a while...", color="light_blue")
         # Remove old one
