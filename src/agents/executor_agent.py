@@ -64,7 +64,7 @@ class Executor:
     def call_model_executor(self, state):
         """
         Calls of Executor's LLM and after receiving its response calls tools. Next performs alluaxury actions
-        depending on last message from LLM. After it exchanges contents of files in agent's context to provide him with
+        depending on last message from LLM. After it exchanges contents of files in agent's context to provide it with
         updated version after inserting changes into file.
         """
         state = call_model(state, self.llms)

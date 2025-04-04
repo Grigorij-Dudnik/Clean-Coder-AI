@@ -19,7 +19,8 @@ from src.agents.frontend_feedback import write_screenshot_codes
 from src.utilities.user_input import user_input
 from src.utilities.start_project_functions import set_up_dot_clean_coder_dir
 from src.utilities.util_functions import create_frontend_feedback_story
-from src.tools.rag.index_file_descriptions import prompt_index_project_files, upsert_file_list
+from src.tools.rag.rag_utils import update_descriptions
+from src.tools.rag.index_file_descriptions import prompt_index_project_files, upsert_file_list, write_file_descriptions, write_file_chunks_descriptions
 from src.tools.rag.retrieval import vdb_available
 from src.linters.static_analisys import python_static_analysis
 from src.utilities.script_execution_utils import logs_from_running_script
@@ -28,11 +29,6 @@ from src.utilities.script_execution_utils import logs_from_running_script
 use_frontend_feedback = bool(os.getenv("FRONTEND_URL"))
 execute_file_name = os.getenv("EXECUTE_FILE_NAME", "main.py")
 
-
-def _update_file_descriptions(files):
-    """Update vector database with descriptions of modified files."""
-    if vdb_available():
-        upsert_file_list([file for file in files if file.is_modified])
 
 
 def run_clean_coder_pipeline(task: str, work_dir: str, doc_harvest: bool = False):
@@ -81,7 +77,7 @@ def run_clean_coder_pipeline(task: str, work_dir: str, doc_harvest: bool = False
             "Please test app and provide commentary if debugging/additional refinement is needed. "
         )
         if human_message in ["o", "ok"]:
-            _update_file_descriptions(files)
+            update_descriptions([file for file in files if file.is_modified])
             return
 
         if execution_message and human_message not in ["o", "ok"]:
@@ -92,7 +88,7 @@ def run_clean_coder_pipeline(task: str, work_dir: str, doc_harvest: bool = False
 
     debugger = Debugger(files, work_dir, human_message, image_paths, playwright_codes)
     files = debugger.do_task(task, plan)
-    _update_file_descriptions(files)
+    update_descriptions([file for file in files if file.is_modified])
 
 
 
