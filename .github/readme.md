@@ -1,4 +1,6 @@
 <div align="center">
+  <img src="/non_src/assets/starting_video.gif" alt="Demo">
+  <br>
   <img src="/non_src/assets/logo_wide_2.png" alt="Logo">
   <br> 
   <h2>Probably the most intelligent AI coder out there.</h2>
