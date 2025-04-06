@@ -200,7 +200,7 @@ Here’s the complete plan, split into two separate steps:
 -   background-color: #f9f9f9;
 +   background-color: #daf5da;
 ```
-Step 2: dziki pies
+Step 2:
 ```profileEditStyles.css
 -   background-color: #218838;
 +   background-color: #34a853;

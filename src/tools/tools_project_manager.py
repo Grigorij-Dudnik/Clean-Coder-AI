@@ -139,7 +139,3 @@ def finish_project_planning(dummy: Annotated[str, "Type 'ok' to proceed."]):
     todoist_api.close_task(task_id=task.id)
 
     task_completed_animation()
-
-
-if __name__ == "__main__":
-    add_task.invoke({"task_name": "Dziki pies", "task_description": "Jakis tam opis", "order": 0, "epic_id": None})

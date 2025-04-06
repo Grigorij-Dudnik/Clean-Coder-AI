@@ -69,7 +69,6 @@ def fetch_epics():
 
 
 def fetch_tasks():
-    print("pies")
     return todoist_api.get_tasks(project_id=os.getenv("TODOIST_PROJECT_ID"))
 
 
