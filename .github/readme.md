@@ -76,7 +76,7 @@ Create an entire web app ~~with~~ by Clean Coder:
 Report bugs or propose new features for Clean Coder on our [Discord](https://discord.gg/8gat7Pv7QJ)!
 
 
-## ⭐️ Say thanks
+## 🌟 Say thanks
 
 We hardly work on developing cutting-edge AI coder for you. Completely for free. Support our work by leaving a star!
 
