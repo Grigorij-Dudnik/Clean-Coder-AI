@@ -1,5 +1,4 @@
 import os
-import subprocess
 from src.tools.tools_coder_pipeline import (
     ask_human_tool,
     prepare_list_dir_tool,
