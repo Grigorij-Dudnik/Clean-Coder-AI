@@ -78,7 +78,7 @@ Report bugs or propose new features for Clean Coder on our [Discord](https://dis
 
 ## 🌟 Say thanks
 
-We hardly working on developing cutting-edge AI coder for you. Completely for free. Please support our work by leaving a star.
+We hardly work on developing cutting-edge AI coder for you. Completely for free. Support our work by leaving a star!
 
 ![Starring](/non_src/assets/star.gif)
 
