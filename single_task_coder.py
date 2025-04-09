@@ -26,7 +26,6 @@ from src.utilities.script_execution_utils import logs_from_running_script
 
 
 use_frontend_feedback = bool(os.getenv("FRONTEND_URL"))
-execute_code = os.getenv("EXECUTE_CODE", False)
 execute_file_name = os.getenv("EXECUTE_FILE_NAME", "main.py")
 
 
@@ -60,7 +59,7 @@ def run_clean_coder_pipeline(task: str, work_dir: str, doc_harvest: bool = False
 
     # Execute the script and collect logs
     execution_message = None
-    if execute_code and os.path.exists(os.path.join(work_dir, execute_file_name)):
+    if execute_file_name and os.path.exists(os.path.join(work_dir, execute_file_name)):
         execution_message = logs_from_running_script(work_dir, execute_file_name)
 
     # static analysis

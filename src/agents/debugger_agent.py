@@ -42,7 +42,6 @@ from src.utilities.util_functions import load_prompt
 load_dotenv(find_dotenv())
 log_file_path = os.getenv("LOG_FILE")
 frontend_url = os.getenv("FRONTEND_URL")
-execute_code = os.getenv("EXECUTE_CODE")
 execute_file_name = os.getenv("EXECUTE_FILE_NAME")
 
 
@@ -113,8 +112,8 @@ class Debugger:
                         file.is_modified = True
                         break
             elif tool_call["name"] == "final_response_debugger":
-                if execute_code:
-                    message = logs_from_running_script(self.work_dir)
+                if execute_file_name:
+                    message = logs_from_running_script(self.work_dir, execute_file_name)
                     state["messages"].append(HumanMessage(content=message))
 
 
