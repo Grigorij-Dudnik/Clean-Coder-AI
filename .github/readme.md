@@ -8,15 +8,16 @@
   Clean Coder is your 2-in-1 AI Scrum Master and Developer. Delegate planning, managing, and coding to AI. Agents create tasks within Todoist, write code, and test it, helping you create great projects with minimal effort!
   <br>
   <br>
-  <a href="https://cleancoder.byst.re/Agent_nr.6-Trailer.mp4" target="_blank" title="Trailer">
-    <img src="/non_src/assets/Miniature_trailer.jpg" width="600" alt="Trailer">
-  </a>
-  <br>
-  <h3>⭐️ Your star motivates us to introduce new cool features! ⭐️</h3>  
+    <h3>⭐️ Your star motivates us to introduce new cool features! ⭐️</h3>  
   <br>
 
 [![Docs](https://img.shields.io/badge/docs-latest-blue)](https://clean-coder.dev)
 [![Discord](https://img.shields.io/static/v1?logo=discord&label=discord&message=Join&color=brightgreen)](https://discord.gg/8gat7Pv7QJ)
+
+  <a href="https://cleancoder.byst.re/Agent_nr.6-Trailer.mp4" target="_blank" title="Trailer">
+    <img src="/non_src/assets/Miniature_trailer.jpg" width="600" alt="Trailer">
+  </a>
+  <br>
 
   <img src="/non_src/assets/CC_diagram_light_golden.png">
 </div>
