@@ -51,7 +51,7 @@ def call_simple_planer(state):
     response = llm_strong.invoke(messages)
     animation.stop()
     print_formatted_content_planner(response.content)
-    state["messages"].append(response.content)
+    state["messages"].append(response)
 
     # plan_message_for_controller = HumanMessage(content=f"Proposed_plan:\n###\n'''{response.content}'''")
     # controller_response = llm_controller.invoke([state["controller_messages"][0], plan_message_for_controller])
@@ -79,8 +79,7 @@ def call_advanced_planner(state):
     plan = llm_middle_strength.invoke(plan_finalizer_messages)
     animation.stop()
     print_formatted_content_planner(plan.content)
-    state["messages"].append(plan.content)
-
+    state["messages"].append(plan)
     ask_human_planner(state)
 
     return state
