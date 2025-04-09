@@ -1,5 +1,4 @@
 import os
-import subprocess
 from src.tools.tools_coder_pipeline import (
     ask_human_tool,
     prepare_list_dir_tool,
@@ -112,6 +111,10 @@ class Debugger:
                         file.is_modified = True
                         break
             elif tool_call["name"] == "final_response_debugger":
+                files_to_check = [file for file in self.files if file.filename.endswith(".py") and file.is_modified]
+                analysis_result = python_static_analysis(files_to_check)
+                if analysis_result:
+                    state["messages"].append(HumanMessage(content=analysis_result))
                 if execute_file_name:
                     message = logs_from_running_script(self.work_dir, execute_file_name)
                     state["messages"].append(HumanMessage(content=message))
