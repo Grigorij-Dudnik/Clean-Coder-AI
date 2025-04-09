@@ -129,7 +129,7 @@ def join_paths(*args):
 def get_joke():
     try:
         response = requests.get("https://v2.jokeapi.dev/joke/Programming?type=single")
-        # response = requests.get("https://uselessfacts.jsph.pl//api/v2/facts/random")
+        # response = requests.get("https://uselessfacts.jsph.pl/api/v2/facts/random")
         joke = response.json()["joke"] + "\n"
     except Exception:
         joke = "Failed to receive joke :/"
@@ -138,6 +138,9 @@ def get_joke():
 
 def list_directory_tree(work_dir):
     tree = []
+    # Normalize path to ensure it always ends with a slash in one line
+    work_dir = work_dir + os.sep if not work_dir.endswith(os.sep) else work_dir
+    
     for root, dirs, files in os.walk(work_dir):
         # Filter out forbidden directories and files
         dirs[:] = [d for d in dirs if not file_folder_ignored(d)]
@@ -231,17 +234,6 @@ def create_coderrules(coderrules_path):
         file.write(rules)
     print_formatted("Project rules saved. You can edit it in .coderrules file.", color="green")
     return rules
-
-def load_prompt(prompt_name):
-    """Load a prompt file
-
-    prompt_name: name of the prompt file, without .prompt extension.
-    """
-    parent_dir = os.path.dirname(os.path.dirname(os.path.realpath(__file__)))
-    prompt_path = os.path.join(parent_dir, "prompts", f"{prompt_name}.prompt")
-    with open(prompt_path, "r") as f:
-        return f.read()
-
 
 
 def load_prompt(prompt_name):
