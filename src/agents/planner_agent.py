@@ -156,4 +156,4 @@ def planning(task, text_files, image_paths, work_dir, documentation=None, dir_tr
         inputs["plan_finalizer_messages"].append(HumanMessage(content=images))
     planner_response = planner.invoke(inputs, {"recursion_limit": 50})["messages"][-2]
 
-    return planner_response
+    return planner_response.content
