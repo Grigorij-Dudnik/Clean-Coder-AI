@@ -133,36 +133,73 @@ def main_test_flow() -> None:
         files = collect_project_files(workspace)
         logger.info("Workspace contains %d files: %s", len(files), files)
 
-        debugger = Debugger(
-            files=files,
-            work_dir=str(workspace),
-            human_feedback="Please ensure the script runs correctly and logs its output.",
-            image_paths=[],
-        )
-
         # Check if main.py exists and create it if needed
         main_py_path = workspace / "main.py"
         if not main_py_path.exists():
             main_py_path.write_text("print('Hello World!')")
+            logger.info("Created main.py with simple 'Hello World' script")
 
-        test_state = {
+        logger.info("Starting Test 1: Running script with silent setup (default behavior)")
+        test_state_silent = {
             "messages": [
                 HumanMessage(content=f"File contents: main.py:\n\n{main_py_path.read_text()}\n"),
             ],
         }
-
-        # Execute main.py and collect logs
-        message = logs_from_running_script(str(workspace), "main.py")
-        test_state["messages"].append(HumanMessage(content=message))
-        updated_state = test_state
+        
+        message_silent = logs_from_running_script(str(workspace), "main.py", silent_setup=True)
+        test_state_silent["messages"].append(HumanMessage(content=message_silent))
+        logger.info("Completed silent setup test")
+        
+        logger.info("Starting Test 2: Running script with verbose setup logs")
+        test_state_verbose = {
+            "messages": [
+                HumanMessage(content=f"File contents: main.py:\n\n{main_py_path.read_text()}\n"),
+            ],
+        }
+        
+        # Remove environment to force recreation with logs
+        env_path = workspace / ENV_DIR_NAME
+        if env_path.exists():
+            import shutil
+            logger.info("Removing existing virtual environment to force recreation")
+            shutil.rmtree(env_path)
+        
+        message_verbose = logs_from_running_script(str(workspace), "main.py", silent_setup=False)
+        test_state_verbose["messages"].append(HumanMessage(content=message_verbose))
+        logger.info("Completed verbose setup test")
 
         # Verification checks
-        env_path = workspace / ENV_DIR_NAME
+        logger.info("Running verification checks")
         assert env_path.exists(), "Virtual environment not created"
-
-        logger.info(f"Updated state: {updated_state}")
-        assert "Hello World!" in updated_state["messages"][-1].content, "Missing expected output"
-
+        logger.info("Virtual environment exists as expected")
+        
+        # Check if silent mode doesn't contain pip installation logs
+        if "pip" not in message_silent and "install" not in message_silent:
+            logger.info("Silent mode correctly suppresses setup logs")
+        else:
+            logger.warning("Silent mode may not be suppressing setup logs properly")
+        assert "pip" not in message_silent or "install" not in message_silent, "Setup logs should be silent"
+        
+        # Check if verbose mode contains pip installation logs (if they were performed)
+        if "pip" in message_verbose and "install" in message_verbose:
+            logger.info("Verbose mode correctly shows pip installation logs")
+        else:
+            logger.warning("Verbose mode doesn't show installation logs, possibly because environment already existed")
+        
+        # Check if script output is visible in both cases
+        if "Hello World!" in message_silent:
+            logger.info("Script output correctly visible in silent mode")
+        else:
+            logger.error("Script output missing in silent mode")
+        assert "Hello World!" in message_silent, "Missing expected output in silent mode"
+        
+        if "Hello World!" in message_verbose:
+            logger.info("Script output correctly visible in verbose mode")
+        else:
+            logger.error("Script output missing in verbose mode")
+        assert "Hello World!" in message_verbose, "Missing expected output in verbose mode"
+        
+        logger.info("All tests passed successfully")
 
 if __name__ == "__main__":
     main_test_flow()
