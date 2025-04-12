@@ -60,7 +60,7 @@ def run_clean_coder_pipeline(task: str, work_dir: str, doc_harvest: bool = False
     # Execute the script and collect logs
     execution_message = None
     if execute_file_name and os.path.exists(os.path.join(work_dir, execute_file_name)):
-        execution_message = logs_from_running_script(work_dir, execute_file_name)
+        execution_message = logs_from_running_script(work_dir, execute_file_name, silent_setup=True)
 
     # static analysis
     files_to_check = [file for file in files if file.filename.endswith(".py") and file.is_modified]

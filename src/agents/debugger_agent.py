@@ -116,9 +116,8 @@ class Debugger:
                 if analysis_result:
                     state["messages"].append(HumanMessage(content=analysis_result))
                 if execute_file_name:
-                    message = logs_from_running_script(self.work_dir, execute_file_name)
+                    message = logs_from_running_script(self.work_dir, execute_file_name, silent_setup=True)
                     state["messages"].append(HumanMessage(content=message))
-
 
         return state
 
