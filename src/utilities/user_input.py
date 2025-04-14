@@ -3,13 +3,18 @@ from src.utilities.print_formatters import print_formatted
 from src.utilities.voice_utils import VoiceRecorder
 import keyboard
 import readline
+import sys
 
 
 recorder = VoiceRecorder()
 
 
 def user_input(prompt=""):
-    print_formatted(prompt + "Or use (m)icrophone to tell:", color="cyan", bold=True)
+    print_formatted(prompt + "Or use (m)icrophone to tell, or press Enter for multiline input:", color="cyan", bold=True)
+    
+    if not sys.stdin.isatty():
+        return sys.stdin.read().strip()
+        
     user_sentence = input()
     if user_sentence == "m":
         if not os.getenv("OPENAI_API_KEY"):
@@ -29,7 +34,15 @@ def user_input(prompt=""):
                 color="red",
             )
             user_sentence = input()
-
+    elif user_sentence == '' or '\n' in user_sentence:  
+        if user_sentence:  
+            return user_sentence
+        print_formatted("Enter your multiline text (end with Ctrl+D on Unix or Ctrl+Z on Windows):", color="green")
+        try:
+            user_sentence = sys.stdin.read().strip()
+        except KeyboardInterrupt:
+            return ""
+        
     return user_sentence
 
 
