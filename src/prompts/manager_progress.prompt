@@ -1,8 +1,7 @@
-Actual list of tasks you planned in Todoist:
-
+<Most actual list of tasks>
 {tasks}
+</Most actual list of tasks>
 
-###
-
-What have been done so far:
+<What have been done so far>
 {progress_description}
+</What have been done so far>

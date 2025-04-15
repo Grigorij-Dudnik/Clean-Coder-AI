@@ -17,7 +17,7 @@ from langchain_core.messages import BaseMessage, HumanMessage
 from langchain_core.load import dumps
 from langgraph.graph import StateGraph
 from src.tools.tools_project_manager import add_task, modify_task, finish_project_planning, reorder_tasks
-from src.tools.tools_coder_pipeline import prepare_list_dir_tool, prepare_see_file_tool, ask_human_tool
+from src.tools.tools_coder_pipeline import prepare_list_dir_tool, prepare_see_file_tool, ask_human_tool, retrieve_files_by_semantic_query
 from src.tools.rag.index_file_descriptions import prompt_index_project_files
 from src.utilities.manager_utils import (
     actualize_tasks_list_and_progress_description,
@@ -35,6 +35,7 @@ from src.utilities.start_project_functions import set_up_dot_clean_coder_dir
 from src.utilities.util_functions import join_paths
 from src.utilities.llms import init_llms_medium_intelligence
 from src.utilities.print_formatters import print_formatted
+from src.tools.rag.retrieval import vdb_available
 import json
 import os
 
@@ -116,11 +117,13 @@ class Manager:
             add_task,
             modify_task,
             reorder_tasks,
-            list_dir,
-            see_file,
             ask_human_tool,
             finish_project_planning,
+            list_dir,
+            see_file,
         ]
+        if vdb_available():
+            tools.append(retrieve_files_by_semantic_query)
         return tools
 
     # workflow definition

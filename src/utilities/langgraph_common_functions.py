@@ -17,7 +17,7 @@ multiple actions, choose only one for now; rest you can execute later."""
 )
 no_tools_msg = (
     TOOL_NOT_EXECUTED_WORD
-    + """Please provide a tool call to execute an action. If all needed actions are done, you can call 'finish' tool."""
+    + """Please provide a tool call to execute an action. If all needed actions are done, you can call 'final_response' tool."""
 )
 empty_message_msg = TOOL_NOT_EXECUTED_WORD + "Empty messages are not allowed."
 finish_too_early_msg = (
