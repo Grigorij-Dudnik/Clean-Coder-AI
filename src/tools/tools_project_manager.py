@@ -24,6 +24,9 @@ load_dotenv(join_paths(work_dir, ".clean_coder/.env"))
 todoist_api_key = os.getenv("TODOIST_API_KEY")
 todoist_api = TodoistAPI(todoist_api_key)
 
+# Create a persistent ThreadPoolExecutor for background tasks
+background_executor = ThreadPoolExecutor(max_workers=1)
+
 @tool
 def add_task(
     task_name: Annotated[
@@ -133,8 +136,7 @@ def finish_project_planning(dummy: Annotated[str, "Type 'ok' to proceed."]):
     if len(tasks) >= 2:
         second_task = tasks[1]
         if "<researched_files>" not in second_task.description:
-            with ThreadPoolExecutor() as executor:
-                executor.submit(research_second_task, work_dir, second_task)
+            background_executor.submit(research_second_task, work_dir, second_task)
 
     # Execute the main pipeline to implement the task
     print_formatted("Asked programmer to execute task:", color="light_blue")
