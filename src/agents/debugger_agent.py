@@ -22,6 +22,7 @@ from src.utilities.util_functions import (
     convert_images,
     list_directory_tree,
 )
+from src.utilities.script_execution_utils import logs_from_running_script
 from src.utilities.llms import init_llms_medium_intelligence
 from src.utilities.langgraph_common_functions import (
     call_model,
@@ -40,6 +41,7 @@ from src.utilities.util_functions import load_prompt
 load_dotenv(find_dotenv())
 log_file_path = os.getenv("LOG_FILE")
 frontend_url = os.getenv("FRONTEND_URL")
+execute_file_name = os.getenv("EXECUTE_FILE_NAME")
 
 
 @tool
@@ -67,10 +69,8 @@ class Debugger:
         self.images = convert_images(image_paths)
         self.human_feedback = human_feedback
         self.playwright_code = playwright_code
-
         # workflow definition
         debugger_workflow = StateGraph(AgentState)
-
         debugger_workflow.add_node("agent", self.call_model_debugger)
         debugger_workflow.add_node("check_log", self.check_log)
         debugger_workflow.add_node("frontend_screenshots", self.frontend_screenshots)
@@ -88,10 +88,9 @@ class Debugger:
         self.debugger = debugger_workflow.compile()
 
     # node functions
-    def call_model_debugger(self, state):
+    def call_model_debugger(self, state: dict) -> dict:
         state = call_model(state, self.llms)
         state = call_tool(state, self.tools)
-
         messages = [msg for msg in state["messages"] if msg.type == "ai"]
         last_ai_message = messages[-1]
         if len(last_ai_message.tool_calls) > 1:
@@ -116,16 +115,17 @@ class Debugger:
                 analysis_result = python_static_analysis(files_to_check)
                 if analysis_result:
                     state["messages"].append(HumanMessage(content=analysis_result))
-
+                if execute_file_name:
+                    message = logs_from_running_script(self.work_dir, execute_file_name, silent_setup=True)
+                    state["messages"].append(HumanMessage(content=message))
 
         return state
 
-    def check_log(self, state):
-        # Add logs
+    def check_log(self, state: dict) -> dict:
+        """Add server logs."""
         logs = check_application_logs()
         log_message = HumanMessage(content="Logs:\n" + logs)
         state["messages"].append(log_message)
-
         return state
 
     def frontend_screenshots(self, state):
@@ -156,7 +156,6 @@ class Debugger:
 
     def after_check_log_condition(self, state):
         last_message = state["messages"][-1]
-
         if last_message.content.endswith("Logs are correct"):
             if self.playwright_code:
                 return "frontend_screenshots"
