@@ -63,8 +63,8 @@ class Manager:
         state = call_model(state, self.llms)
         state = self.cut_off_context(state)
         state = call_tool(state, self.tools)
-        messages = [msg for msg in state["messages"] if msg.type == "ai"]
-        last_ai_message = messages[-1]
+        ai_messages = [msg for msg in state["messages"] if msg.type == "ai"]
+        last_ai_message = ai_messages[-1]
         if not last_ai_message.content and not last_ai_message.tool_calls:
             state["messages"].pop()
             state["messages"].append(HumanMessage(content=empty_message_msg))
