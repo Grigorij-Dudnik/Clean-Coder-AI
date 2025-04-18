@@ -30,16 +30,15 @@ use_frontend_feedback = bool(os.getenv("FRONTEND_URL"))
 execute_file_name = os.getenv("EXECUTE_FILE_NAME", "main.py")
 
 
-
 def run_clean_coder_pipeline(task: str, work_dir: str, doc_harvest: bool = False):
     researcher = Researcher(work_dir)
     files, image_paths = researcher.research_task(task)
-    documentation = None
-    if doc_harvest:
-        harvester = Doc_harvester()
-        documentation = harvester.find_documentation(task, work_dir)
+    # documentation = None
+    # if doc_harvest:
+    #     harvester = Doc_harvester()
+    #     documentation = harvester.find_documentation(task, work_dir)
 
-    plan = planning(task, files, image_paths, work_dir, documentation=documentation)
+    plan = planning(task, files, image_paths, work_dir) #, documentation=documentation)
 
     executor = Executor(files, work_dir)
 
@@ -95,7 +94,7 @@ def run_clean_coder_pipeline(task: str, work_dir: str, doc_harvest: bool = False
 if __name__ == "__main__":
     work_dir = os.getenv("WORK_DIR")
     if not work_dir:
-        raise Exception("WORK_DIR variable not provided. Please add WORK_DIR to .env file")
+        raise Exception("WORK_DIR variable is not provided. Please add WORK_DIR to .env file")
     set_up_dot_clean_coder_dir(work_dir)
     prompt_index_project_files()
     task = user_input("Provide task to be executed. ")

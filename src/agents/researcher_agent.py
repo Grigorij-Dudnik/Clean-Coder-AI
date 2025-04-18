@@ -2,7 +2,7 @@ from typing import TypedDict, Sequence, List
 from src.utilities.objects import CodeFile
 from typing_extensions import Annotated
 from langchain_core.messages import BaseMessage, HumanMessage, SystemMessage
-from langgraph.graph import StateGraph
+from langgraph.graph import StateGraph, END
 from dotenv import load_dotenv, find_dotenv
 from langchain_core.tools import tool
 from src.tools.tools_coder_pipeline import (
@@ -52,21 +52,9 @@ class AgentState(TypedDict):
     messages: Sequence[BaseMessage]
 
 
-# Logic for conditional edges
-def after_agent_condition(state):
-    messages = [msg for msg in state["messages"] if msg.type in ["ai", "human"]]
-    last_message = messages[-1]
-
-    if last_message.content == no_tools_msg:
-        return "agent"
-    elif last_message.tool_calls[0]["name"] == "final_response_researcher":
-        return "human"
-    else:
-        return "agent"
-
-
 class Researcher:
-    def __init__(self, work_dir):
+    def __init__(self, work_dir, silent=False):
+        self.silent = silent
         see_file = prepare_see_file_tool(work_dir)
         list_dir = prepare_list_dir_tool(work_dir)
         self.tools = [see_file, list_dir, final_response_researcher]
@@ -82,14 +70,14 @@ class Researcher:
 
         researcher_workflow.set_entry_point("agent")
 
-        researcher_workflow.add_conditional_edges("agent", after_agent_condition)
+        researcher_workflow.add_conditional_edges("agent", self.after_agent_condition)
         researcher_workflow.add_conditional_edges("human", after_ask_human_condition)
 
         self.researcher = researcher_workflow.compile()
 
     # node functions
     def call_model_researcher(self, state):
-        state = call_model(state, self.llms)
+        state = call_model(state, self.llms, printing=not self.silent)
         last_message = state["messages"][-1]
         if len(last_message.tool_calls) == 0:
             state["messages"].append(HumanMessage(content=no_tools_msg))
@@ -102,10 +90,25 @@ class Researcher:
         state = call_tool(state, self.tools)
         return state
 
+    # condition functions
+    def after_agent_condition(self, state):
+        messages = [msg for msg in state["messages"] if msg.type in ["ai", "human"]]
+        last_message = messages[-1]
+
+        if last_message.content == no_tools_msg:
+            return "agent"
+        elif last_message.tool_calls[0]["name"] == "final_response_researcher":
+            if self.silent:
+                return END  # Skip human approval in silent mode
+            return "human"
+        else:
+            return "agent"
+
     # just functions
     def research_task(self, task):
-        print_formatted("Researcher starting its work", color="green")
-        print_formatted("👋 Hey! I'm looking for files on which we will work on together!", color="light_blue")
+        if not self.silent:
+            print_formatted("Researcher starting its work", color="green")
+            print_formatted("👋 Hey! I'm looking for files on which we will work on together!", color="light_blue")
 
         system_prompt_template = load_prompt("researcher_system")
         system_message = system_prompt_template.format(task=task, project_rules=read_coderrules())

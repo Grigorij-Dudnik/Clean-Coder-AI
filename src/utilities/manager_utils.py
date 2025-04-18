@@ -2,6 +2,7 @@
 In manager_utils.py we are placing all functions used by manager agent only, which are not tools.
 """
 # imports
+from src.utilities.print_formatters import print_formatted
 from langchain_core.messages import HumanMessage, SystemMessage, ToolMessage, AIMessage
 from src.utilities.llms import init_llms_medium_intelligence
 from src.utilities.util_functions import join_paths, read_coderrules, list_directory_tree, load_prompt
@@ -299,21 +300,22 @@ def load_system_message():
 def research_second_task(work_dir: str, task) -> None:
     """Research provided task and add results to its description."""
     from src.agents.researcher_agent import Researcher  # Import here to avoid circular imports
-    
+
+    print_formatted("Starting background research for next task...", color="light_blue")
     # Run researcher on task
-    researcher = Researcher(work_dir)
+    researcher = Researcher(work_dir, silent=True)
     files, image_paths = researcher.research_task(
         f"{task.content}\n\n{task.description}"
     )
-    
+
     # Format researched files
     files_text = "\n".join(f"- {f.filename}" for f in files)
     images_text = "\n".join(f"- {img}" for img in image_paths)
     researched_files_text = f"Files to modify:\n{files_text}\n\nTemplate images:\n{images_text}"
-    
+
     # Update task description
     new_description = task.description + f"\n\n<researched_files>\n{researched_files_text}\n</researched_files>"
-    
+
     todoist_api.update_task(
         task_id=task.id,
         description=new_description
