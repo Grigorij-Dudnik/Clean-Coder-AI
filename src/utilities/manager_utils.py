@@ -301,7 +301,6 @@ def research_second_task(work_dir: str, task) -> None:
     """Research provided task and add results to its description."""
     from src.agents.researcher_agent import Researcher  # Import here to avoid circular imports
 
-    print_formatted("Starting background research for next task...", color="light_blue")
     # Run researcher on task
     researcher = Researcher(work_dir, silent=True)
     files, image_paths = researcher.research_task(

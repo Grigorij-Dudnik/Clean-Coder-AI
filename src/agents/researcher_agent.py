@@ -99,6 +99,7 @@ class Researcher:
             return "agent"
         elif last_message.tool_calls[0]["name"] == "final_response_researcher":
             if self.silent:
+                state["messages"].append(HumanMessage(content="Approved automatically"))    # Dummy message to fullfil state, to align with "Approved by human" message in loun mode
                 return END  # Skip human approval in silent mode
             return "human"
         else:
