@@ -138,7 +138,7 @@ class Manager:
 
     def run(self):
         print_formatted("😀 Hello! I'm Manager agent. Let's plan your project together!", color="green")
-
+        
         messages = get_manager_messages(self.saved_messages_path)
         inputs = {"messages": messages}
         self.manager.invoke(inputs, {"recursion_limit": 1000})
