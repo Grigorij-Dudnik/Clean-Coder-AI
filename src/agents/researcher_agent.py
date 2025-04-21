@@ -21,6 +21,7 @@ from src.utilities.langgraph_common_functions import (
 )
 from src.utilities.print_formatters import print_formatted
 from src.utilities.llms import init_llms_medium_intelligence
+from src.utilities.util_functions import save_state_history_to_disk
 import os
 
 
@@ -100,6 +101,9 @@ class Researcher:
         elif last_message.tool_calls[0]["name"] == "final_response_researcher":
             if self.silent:
                 state["messages"].append(HumanMessage(content="Approved automatically"))    # Dummy message to fullfil state, to align with "Approved by human" message in loun mode
+                # Save research history when auto-approved
+                history_file = os.path.join(work_dir, ".clean_coder", f"research_history.json")
+                save_state_history_to_disk(state, history_file)
                 return END  # Skip human approval in silent mode
             return "human"
         else:

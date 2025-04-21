@@ -2,7 +2,6 @@
 In manager_utils.py we are placing all functions used by manager agent only, which are not tools.
 """
 # imports
-from src.utilities.print_formatters import print_formatted
 from langchain_core.messages import HumanMessage, SystemMessage, ToolMessage, AIMessage
 from src.utilities.llms import init_llms_medium_intelligence
 from src.utilities.util_functions import join_paths, read_coderrules, list_directory_tree, load_prompt
@@ -103,12 +102,7 @@ def get_project_tasks_and_epics():
     tasks_without_epic = [task for task in tasks if task.section_id is None]
     if tasks_without_epic:
         output_string += "## Tasks without epic:\n\n"
-        output_string += "\n".join(
-            f"Task:\nid: {task.id}, \nName: {task.content}, \nDescription: \n'''{task.description}''', \nOrder: {task.order}\n"
-            for task in tasks_without_epic
-        )
-    output_string += "\n###\n"
-    if not tasks:
+
         output_string = "<empty>"
     return output_string
 
@@ -319,3 +313,4 @@ def research_second_task(work_dir: str, task) -> None:
         task_id=task.id,
         description=new_description
     )
+

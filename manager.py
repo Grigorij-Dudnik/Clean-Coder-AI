@@ -19,6 +19,7 @@ from langgraph.graph import StateGraph
 from src.tools.tools_project_manager import add_task, modify_task, finish_project_planning, reorder_tasks
 from src.tools.tools_coder_pipeline import prepare_list_dir_tool, prepare_see_file_tool, ask_human_tool, retrieve_files_by_semantic_query
 from src.tools.rag.index_file_descriptions import prompt_index_project_files
+from src.utilities.util_functions import save_state_history_to_disk
 from src.utilities.manager_utils import (
     actualize_tasks_list_and_progress_description,
     setup_todoist_project_if_needed,
@@ -59,7 +60,7 @@ class Manager:
         self.saved_messages_path = join_paths(self.work_dir, ".clean_coder/manager_messages.json")
 
     def call_model_manager(self, state):
-        self.save_messages_to_disk(state)
+        save_state_history_to_disk(state, self.saved_messages_path)
         state = call_model(state, self.llms)
         state = self.cut_off_context(state)
         state = call_tool(state, self.tools)
@@ -73,6 +74,7 @@ class Manager:
 
         state = actualize_tasks_list_and_progress_description(state)
         return state
+
 
     # Logic for conditional edges
     def after_agent_condition(self, state):

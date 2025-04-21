@@ -6,6 +6,8 @@ from src.utilities.print_formatters import print_formatted
 from dotenv import load_dotenv, find_dotenv
 from todoist_api_python.api import TodoistAPI
 from langchain_core.messages import HumanMessage, ToolMessage
+from langchain_core.load import dumps
+import json
 import click
 
 
@@ -245,6 +247,19 @@ def load_prompt(prompt_name):
     prompt_path = os.path.join(parent_dir, "prompts", f"{prompt_name}.prompt")
     with open(prompt_path, "r") as f:
         return f.read()
+
+def save_state_history_to_disk(state, messages_path):
+    """Save messages from state to disk.
+    
+    Args:
+        state: The state containing messages to save
+        messages_path: Path where to save the messages
+    """
+    # remove system message
+    messages = state["messages"][1:]
+    messages_string = dumps(messages)
+    with open(messages_path, "w") as f:
+        json.dump(messages_string, f)
 
 
 if __name__ == "__main__":
