@@ -249,12 +249,7 @@ def load_prompt(prompt_name):
         return f.read()
 
 def save_state_history_to_disk(state, messages_path):
-    """Save messages from state to disk.
-    
-    Args:
-        state: The state containing messages to save
-        messages_path: Path where to save the messages
-    """
+    """Save messages from state to disk."""
     # remove system message
     messages = state["messages"][1:]
     messages_string = dumps(messages)

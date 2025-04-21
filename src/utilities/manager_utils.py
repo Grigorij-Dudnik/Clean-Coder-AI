@@ -291,12 +291,12 @@ def load_system_message():
     )
 
 
-def research_second_task(work_dir: str, task) -> None:
+def research_second_task(task) -> None:
     """Research provided task and add results to its description."""
     from src.agents.researcher_agent import Researcher  # Import here to avoid circular imports
 
     # Run researcher on task
-    researcher = Researcher(work_dir, silent=True)
+    researcher = Researcher(silent=True, task_id=task.id)
     files, image_paths = researcher.research_task(
         f"{task.content}\n\n{task.description}"
     )
@@ -313,4 +313,3 @@ def research_second_task(work_dir: str, task) -> None:
         task_id=task.id,
         description=new_description
     )
-

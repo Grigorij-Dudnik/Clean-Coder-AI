@@ -54,7 +54,8 @@ class AgentState(TypedDict):
 
 
 class Researcher:
-    def __init__(self, work_dir, silent=False):
+    def __init__(self, silent=False, task_id=None):
+        self.task_id = task_id
         self.silent = silent
         see_file = prepare_see_file_tool(work_dir)
         list_dir = prepare_list_dir_tool(work_dir)
@@ -101,8 +102,8 @@ class Researcher:
         elif last_message.tool_calls[0]["name"] == "final_response_researcher":
             if self.silent:
                 state["messages"].append(HumanMessage(content="Approved automatically"))    # Dummy message to fullfil state, to align with "Approved by human" message in loun mode
-                # Save research history when auto-approved
-                history_file = os.path.join(work_dir, ".clean_coder", f"research_history.json")
+                # Save research history to file
+                history_file = os.path.join(work_dir, ".clean_coder", f"research_history_task_{self.task_id}.json")
                 save_state_history_to_disk(state, history_file)
                 return END  # Skip human approval in silent mode
             return "human"
@@ -130,5 +131,5 @@ class Researcher:
 
 if __name__ == "__main__":
     task = """Check all system"""
-    researcher = Researcher(work_dir)
+    researcher = Researcher()
     researcher.research_task(task)

@@ -136,7 +136,7 @@ def finish_project_planning(dummy: Annotated[str, "Type 'ok' to proceed."]):
     if len(tasks) >= 2:
         second_task = tasks[1]
         if "<researched_files>" not in second_task.description:
-            background_executor.submit(research_second_task, work_dir, second_task)
+            background_executor.submit(research_second_task, second_task)
 
     # Execute the main pipeline to implement the task
     print_formatted("Asked programmer to execute task:", color="light_blue")
