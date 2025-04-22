@@ -77,13 +77,22 @@ def check_template_tag_balance(code, open_tag, close_tag):
     opened_tags_count = 0
     open_tag_len = len(open_tag)
     close_tag_len = len(close_tag)
-
+    
     i = 0
     while i < len(code):
         # check for open tag plus '>' or space after
         if code[i : i + open_tag_len] == open_tag and code[i + open_tag_len] in [" ", ">", "\n"]:
-            opened_tags_count += 1
-            i += open_tag_len
+            # Look ahead for self-closing tag
+            look_ahead = code[i:i + 30]  # Look ahead reasonable number of characters
+            closing_pos = look_ahead.find("/>")
+            
+            if closing_pos != -1:
+                # Self-closing tag found - skip to end of tag
+                i += closing_pos + 2
+            else:
+                # Regular opening tag
+                opened_tags_count += 1
+                i += open_tag_len
         elif code[i : i + close_tag_len] == close_tag:
             opened_tags_count -= 1
             i += close_tag_len
@@ -91,7 +100,7 @@ def check_template_tag_balance(code, open_tag, close_tag):
                 return f"Invalid syntax, mismatch of {open_tag} and {close_tag}"
         else:
             i += 1
-
+    
     if opened_tags_count == 0:
         return "Valid syntax"
     else:
@@ -221,40 +230,55 @@ def parse_yaml(yaml_string):
 
 if __name__ == "__main__":
     code = """
-  <div class="contact-image mobile"></div>
+'use client';
 
-  <div class="static-page">
-    <div class="content contact-page">
+import { FC, useState, useCallback, useEffect } from 'react';
+import Player from './components/Player';
+import Enemies from './components/Enemies';
+import Projectiles from './components/Projectiles';
 
-      <div class="contact-details-wrapper">
-        <div class="contact-details">
-          <h1 class="static-page-header">Kontakt</h1>
+const GamePage: FC = () => {
+  const [projectiles, setProjectiles] = useState<{ x: number; y: number }[]>([]);
 
-          <p class="static-page-paragraph">
-            <span class="contact-box">
-              Masz sugestie dotyczące profilu lub potrzebujesz naszego wsparcia?<br>
-              Skontaktuj się z nami!
+  const handleShoot = useCallback((x: number) => {
+    setProjectiles(prev => [...prev, { x, y: 0 }]);
+  }, []);
 
-              <span class="content-wrapper">
-                <v-icon>mdi-email-outline</v-icon>
-                <a class="link" href="mailto:biuro@takzyli.pl">biuro@takzyli.pl</a>
-              </span>
+  const handleHit = useCallback((projectileIndex: number) => {
+    setProjectiles(prev => prev.filter((_, index) => index !== projectileIndex));
+  }, []);
 
-              <span class="content-wrapper">
-                <v-icon>mdi-phone</v-icon>
-                <a class="link" href="tel:+48533769790">+48 533 769 790</a>
-              </span>
-            </span>
-          </p>
+  useEffect(() => {
+    const gameLoop = setInterval(() => {
+      setProjectiles(prev => 
+        prev
+          .map(p => ({ ...p, y: p.y + 5 }))
+          .filter(p => p.y < 600)
+      );
+    }, 16);
 
-          <p class="static-page-paragraph">Zapraszamy do kontaktu!</p>
+    return () => clearInterval(gameLoop);
+  }, []);
 
-          <img src="@/assets/images/logo-sign.svg" class="logo-sign" alt="Logo Sign" />
+  return (
+    <div className="min-h-screen flex flex-col items-center bg-white dark:bg-[#0a0a0a]">
+      <header className="w-full text-center py-8">
+        <h1 className="text-4xl font-bold text-foreground">Space Invaders</h1>
+      </header>
+
+      <main className="flex-1 w-full max-w-4xl p-4">
+        <div className="w-full h-[600px] bg-gray-900 rounded-lg relative">
+          <Enemies projectiles={projectiles} onHit={handleHit} />
+          <Player onShoot={handleShoot} />
+          <Projectiles projectiles={projectiles} />
         </div>
-
-        <div class="contact-image"></div>
-      </div>
+      </main>
+      <div >
     </div>
-  </div>
+  );
+}
+
+export default GamePage;
+
 """
-    print(parse_html(code))
+    print(parse_tsx(code))
