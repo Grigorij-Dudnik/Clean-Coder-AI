@@ -13,7 +13,7 @@ elif load_dotenv(find_dotenv()) and not os.getenv("TODOIST_API_KEY"):
     add_todoist_envs()
 
 from typing import TypedDict, Sequence
-from langchain_core.messages import BaseMessage, HumanMessage
+from langchain_core.messages import BaseMessage, HumanMessage, AIMessage
 from langchain_core.load import dumps
 from langgraph.graph import StateGraph
 from src.tools.tools_project_manager import add_task, modify_task, finish_project_planning, reorder_tasks
@@ -30,7 +30,6 @@ from src.utilities.langgraph_common_functions import (
     call_tool,
     multiple_tools_msg,
     no_tools_msg,
-    empty_message_msg,
 )
 from src.utilities.start_project_functions import set_up_dot_clean_coder_dir
 from src.utilities.util_functions import join_paths
@@ -39,6 +38,7 @@ from src.utilities.print_formatters import print_formatted
 from src.tools.rag.retrieval import vdb_available
 import json
 import os
+import uuid
 
 
 class AgentState(TypedDict):
@@ -63,15 +63,27 @@ class Manager:
         save_state_history_to_disk(state, self.saved_messages_path)
         state = call_model(state, self.llms)
         state = self.cut_off_context(state)
-        state = call_tool(state, self.tools)
+
         ai_messages = [msg for msg in state["messages"] if msg.type == "ai"]
         last_ai_message = ai_messages[-1]
+        # in case model will return empty message (that strange thing happens for 3.5 and 3.7 sonnet after task execution),
+        # we will replace it with tool call message to go with next task
         if not last_ai_message.content and not last_ai_message.tool_calls:
             state["messages"].pop()
-            state["messages"].append(HumanMessage(content=empty_message_msg))
+            state["messages"].append(AIMessage(
+                content="Proceeding with next task.",
+                tool_calls=[
+                    {
+                        "name": "finish_project_planning",
+                        "args": {"dummy": "ok"},
+                        "id": uuid.uuid4(),
+                        "type": "tool_call",
+                    }
+                ]
+            ))
         elif len(last_ai_message.tool_calls) == 0:
             state["messages"].append(HumanMessage(content=no_tools_msg))
-
+        state = call_tool(state, self.tools)
         state = actualize_tasks_list_and_progress_description(state)
         return state
 
@@ -138,6 +150,7 @@ class Manager:
 
     def run(self):
         print_formatted("😀 Hello! I'm Manager agent. Let's plan your project together!", color="green")
+        print("Hello World")
         
         messages = get_manager_messages(self.saved_messages_path)
         inputs = {"messages": messages}

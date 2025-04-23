@@ -149,3 +149,5 @@ def finish_project_planning(dummy: Annotated[str, "Type 'ok' to proceed."]):
     todoist_api.close_task(task_id=first_task.id)
 
     task_completed_animation()
+
+    return "Task completed successfully"
