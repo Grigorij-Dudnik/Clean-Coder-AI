@@ -76,7 +76,7 @@ class Manager:
                     {
                         "name": "finish_project_planning",
                         "args": {"dummy": "ok"},
-                        "id": uuid.uuid4(),
+                        "id": str(uuid.uuid4()),
                         "type": "tool_call",
                     }
                 ]
@@ -150,7 +150,6 @@ class Manager:
 
     def run(self):
         print_formatted("😀 Hello! I'm Manager agent. Let's plan your project together!", color="green")
-        print("Hello World")
         
         messages = get_manager_messages(self.saved_messages_path)
         inputs = {"messages": messages}

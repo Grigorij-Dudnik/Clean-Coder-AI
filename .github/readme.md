@@ -65,7 +65,7 @@ That's why we're care about making Clean Coder have top intelligence level and b
 
 ## ✨ Key advantages:
 
-- Get project supervised by [Manager agent](https://clean-coder.dev/usage/manager/) with thoroughly-described tasks organized in Todoist, just like with a human scrum master.
+- Get project supervised by [Manager agent](https://clean-coder.dev/usage/manager/) with tasks organized in Todoist, just like with a human scrum master.
 - Two-step planning module makes Clean Coder probably most intelligent [AI coder](https://clean-coder.dev/usage/programmer_pipeline/) available.
 - [Semantic search (RAG)](https://clean-coder.dev/advanced_features_installation/similarity_search_for_researcher/) for effective navigating even large codebases.
 - Allow AI to see frontend it creates with [frontend feedback feature](https://clean-coder.dev/features/frontend_feedback/). At the day of writing no other AI coder has that feature.
