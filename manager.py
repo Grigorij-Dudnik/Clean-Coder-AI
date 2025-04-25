@@ -19,7 +19,7 @@ from langgraph.graph import StateGraph
 from src.tools.tools_project_manager import add_task, modify_task, finish_project_planning, reorder_tasks
 from src.tools.tools_coder_pipeline import prepare_list_dir_tool, prepare_see_file_tool, ask_human_tool, retrieve_files_by_semantic_query
 from src.tools.rag.index_file_descriptions import prompt_index_project_files
-from src.utilities.util_functions import save_state_history_to_disk
+from src.utilities.util_functions import save_state_history_to_disk, join_paths
 from src.utilities.manager_utils import (
     actualize_tasks_list_and_progress_description,
     setup_todoist_project_if_needed,
@@ -32,7 +32,6 @@ from src.utilities.langgraph_common_functions import (
     no_tools_msg,
 )
 from src.utilities.start_project_functions import set_up_dot_clean_coder_dir
-from src.utilities.util_functions import join_paths
 from src.utilities.llms import init_llms_medium_intelligence
 from src.utilities.print_formatters import print_formatted
 from src.tools.rag.retrieval import vdb_available

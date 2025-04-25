@@ -135,13 +135,14 @@ def finish_project_planning(dummy: Annotated[str, "Type 'ok' to proceed."]):
     # Start background research of second task if available and not researched yet
     if len(tasks) >= 2:
         second_task = tasks[1]
-        if "<researched_files>" not in second_task.description:
+        history_file = join_paths(work_dir, ".clean_coder", f"research_history_task_{second_task.id}.json")
+        if not os.path.exists(history_file):
             background_executor.submit(research_second_task, second_task)
 
     # Execute the main pipeline to implement the task
     print_formatted("Asked programmer to execute task:", color="light_blue")
     print_text_snippet(first_task.description, title=first_task.content)
-    run_clean_coder_pipeline(task_name_description, work_dir)
+    run_clean_coder_pipeline(task_name_description, work_dir, task_id=first_task.id)
 
     actualize_progress_description_file(task_name_description)
 

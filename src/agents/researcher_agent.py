@@ -11,7 +11,14 @@ from src.tools.tools_coder_pipeline import (
     retrieve_files_by_semantic_query,
 )
 from src.tools.rag.retrieval import vdb_available
-from src.utilities.util_functions import list_directory_tree, read_coderrules, load_prompt
+from src.utilities.util_functions import (
+    list_directory_tree,
+    read_coderrules,
+    load_prompt,
+    save_state_history_to_disk,
+    load_state_history_from_disk,
+    join_paths,
+)
 from src.utilities.langgraph_common_functions import (
     call_model,
     call_tool,
@@ -21,7 +28,7 @@ from src.utilities.langgraph_common_functions import (
 )
 from src.utilities.print_formatters import print_formatted
 from src.utilities.llms import init_llms_medium_intelligence
-from src.utilities.util_functions import save_state_history_to_disk
+
 import os
 
 
@@ -63,6 +70,12 @@ class Researcher:
         if vdb_available():
             self.tools.append(retrieve_files_by_semantic_query)
         self.llms = init_llms_medium_intelligence(self.tools, "Researcher")
+        # Try to load previous research session for this task (if any)
+        self.prev_messages: List[BaseMessage] = []
+        if task_id:
+            history_file = join_paths(work_dir, ".clean_coder", f"research_history_task_{task_id}.json")
+            if os.path.exists(history_file):
+                self.prev_messages = load_state_history_from_disk(history_file)
 
         # workflow definition
         researcher_workflow = StateGraph(AgentState)
@@ -117,10 +130,16 @@ class Researcher:
             print_formatted("👋 Hey! I'm looking for files on which we will work on together!", color="light_blue")
 
         system_prompt_template = load_prompt("researcher_system")
-        system_message = system_prompt_template.format(task=task, project_rules=read_coderrules())
-        inputs = {
-            "messages": [SystemMessage(content=system_message), HumanMessage(content=list_directory_tree(work_dir))]
-        }
+        system_message = SystemMessage(
+            content=system_prompt_template.format(task=task, project_rules=read_coderrules())
+        )
+
+        # Continue previous dialogue if available; otherwise start fresh
+        if self.prev_messages:
+            messages = [system_message] + self.prev_messages
+        else:
+            messages = [system_message, HumanMessage(content=list_directory_tree(work_dir))]
+        inputs = {"messages": messages}
         researcher_response = self.researcher.invoke(inputs, {"recursion_limit": 100})["messages"][-3]
         response_args = researcher_response.tool_calls[0]["args"]
         text_files = set(CodeFile(f) for f in response_args["files_to_work_on"] + response_args["reference_files"])
