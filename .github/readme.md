@@ -54,7 +54,7 @@ Our dream is to create a fully autonomous programmer one day, letting you relax 
 
 That's why we care about making Clean Coder have top intelligence level and be equipped with most modern automation tools.
 
-Learn more about Clean COder's idea [here](https://clean-coder.dev/faq/why_clean_coder/).
+Learn more about Clean Coder's idea [here](https://clean-coder.dev/faq/why_clean_coder/).
 
 | Feature | Clean Coder | Cline | Aider | Cursor |
 |---------|-------------|--------|-------|---------|
