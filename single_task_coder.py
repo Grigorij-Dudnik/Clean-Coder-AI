@@ -20,8 +20,7 @@ from src.utilities.user_input import user_input
 from src.utilities.start_project_functions import set_up_dot_clean_coder_dir
 from src.utilities.util_functions import create_frontend_feedback_story
 from src.tools.rag.rag_utils import update_descriptions
-from src.tools.rag.index_file_descriptions import prompt_index_project_files, upsert_file_list, write_file_descriptions, write_file_chunks_descriptions
-from src.tools.rag.retrieval import vdb_available
+from src.tools.rag.index_file_descriptions import prompt_index_project_files
 from src.linters.static_analisys import python_static_analysis
 from src.utilities.script_execution_utils import logs_from_running_script
 

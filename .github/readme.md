@@ -52,7 +52,9 @@ Create an entire web app ~~with~~ by Clean Coder:
 
 Our dream is to create a fully autonomous programmer one day, letting you relax (or at least do another job 😜) while your coding job will be done by AI.
 
-That's why we're care about making Clean Coder have top intelligence level and be equipped with most modern automation tools.
+That's why we care about making Clean Coder have top intelligence level and be equipped with most modern automation tools.
+
+Learn more about Clean COder's idea [here](https://clean-coder.dev/faq/why_clean_coder/).
 
 | Feature | Clean Coder | Cline | Aider | Cursor |
 |---------|-------------|--------|-------|---------|
