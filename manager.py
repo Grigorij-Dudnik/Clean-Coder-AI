@@ -81,9 +81,9 @@ class Manager:
                     }
                 ]
             ))
-        elif len(last_ai_message.tool_calls) == 0:
-            state["messages"].append(HumanMessage(content=no_tools_msg))
         state = call_tool(state, self.tools)
+        if len(last_ai_message.tool_calls) == 0:
+            state["messages"].append(HumanMessage(content=no_tools_msg))
         state = actualize_tasks_list_and_progress_description(state)
         return state
 

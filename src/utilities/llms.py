@@ -20,7 +20,7 @@ def llm_open_router(model):
             "HTTP-Referer": "https://github.com/Grigorij-Dudnik/Clean-Coder-AI",
             "X-Title": "Clean Coder",
         },
-        timeout=60,
+        timeout=90,
     )
 
 
@@ -36,12 +36,12 @@ def llm_open_local_hosted(model):
 def init_llms_medium_intelligence(tools=None, run_name="Clean Coder", temp=0):
     llms = []
     if getenv("ANTHROPIC_API_KEY"):
-        llms.append(ChatAnthropic(model="claude-3-5-sonnet-latest", temperature=temp, timeout=60, max_tokens=4096))
+        llms.append(ChatAnthropic(model="claude-3-5-sonnet-latest", temperature=temp, timeout=90))
 
     if getenv("OPENROUTER_API_KEY"):
         llms.append(llm_open_router("anthropic/claude-3.5-sonnet"))
     if getenv("OPENAI_API_KEY"):
-        llms.append(ChatOpenAI(model="gpt-4.1", temperature=temp, timeout=60))
+        llms.append(ChatOpenAI(model="gpt-4.1", temperature=temp, timeout=90))
 
     if getenv("OLLAMA_MODEL"):
         llms.append(ChatOllama(model=os.getenv("OLLAMA_MODEL")))
@@ -57,11 +57,11 @@ def init_llms_medium_intelligence(tools=None, run_name="Clean Coder", temp=0):
 def init_llms_mini(tools=None, run_name="Clean Coder", temp=0):
     llms = []
     if os.getenv("ANTHROPIC_API_KEY"):
-        llms.append(ChatAnthropic(model="claude-3-5-haiku-20241022", temperature=temp, timeout=60))
+        llms.append(ChatAnthropic(model="claude-3-5-haiku-20241022", temperature=temp, timeout=90))
     if os.getenv("OPENROUTER_API_KEY"):
         llms.append(llm_open_router("anthropic/claude-3.5-haiku"))
     if os.getenv("OPENAI_API_KEY"):
-        llms.append(ChatOpenAI(model="gpt-4.1-mini", temperature=temp, timeout=60))
+        llms.append(ChatOpenAI(model="gpt-4.1-mini", temperature=temp, timeout=90))
     # if os.getenv("GOOGLE_API_KEY"):
     #     llms.append(ChatGoogleGenerativeAI(model="gemini-2.0-flash-exp", temperature=temp, timeout=60))
     if os.getenv("OLLAMA_MODEL"):
@@ -78,13 +78,13 @@ def init_llms_mini(tools=None, run_name="Clean Coder", temp=0):
 def init_llms_high_intelligence(tools=None, run_name="Clean Coder", temp=0.2):
     llms = []
     if os.getenv("ANTHROPIC_API_KEY"):
-        llms.append(ChatAnthropic(model="claude-3-7-sonnet-latest", temperature=temp, timeout=60, max_tokens=4096))
+        llms.append(ChatAnthropic(model="claude-3-7-sonnet-latest", temperature=temp, timeout=90))
     if getenv("OPENROUTER_API_KEY"):
         llms.append(llm_open_router("anthropic/claude-3.7-sonnet"))
     if os.getenv("OPENAI_API_KEY"):
-        llms.append(ChatOpenAI(model="o3", temperature=1, timeout=60, reasoning_effort="high"))
+        llms.append(ChatOpenAI(model="o3", temperature=1, timeout=90, reasoning_effort="high"))
     if os.getenv("OPENAI_API_KEY"):
-        llms.append(ChatOpenAI(model="o1", temperature=1, timeout=60))
+        llms.append(ChatOpenAI(model="o1", temperature=1, timeout=90))
 
     if os.getenv("OLLAMA_MODEL"):
         llms.append(ChatOllama(model=os.getenv("OLLAMA_MODEL")))
