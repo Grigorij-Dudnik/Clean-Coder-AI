@@ -26,7 +26,7 @@ from src.utilities.langgraph_common_functions import (
     after_ask_human_condition,
     no_tools_msg,
 )
-from src.utilities.print_formatters import print_formatted
+from src.utilities.print_formatters import print_formatted, print_tool_message
 from src.utilities.llms import init_llms_medium_intelligence
 
 import os
@@ -124,28 +124,65 @@ class Researcher:
             return "agent"
 
     # just functions
+    def _start_from_previous_research(self, system_message):
+        """
+        Handles the logic for uploading and confirming previous research session.
+        Returns (result, updated_messages):
+            - result: (text_files_saved, image_paths_saved) if approved, else None
+            - updated_messages: updated messages list if not approved, else None
+        """
+        messages = [system_message] + self.prev_messages
+        # Find the last AI message with a final_response_researcher tool call
+        final_resp_msg = None
+        for msg in reversed(self.prev_messages):
+            if hasattr(msg, "tool_calls") and msg.tool_calls and msg.tool_calls[0]["name"] == "final_response_researcher":
+                final_resp_msg = msg
+                break
+        if final_resp_msg is not None:
+            print_formatted("Uploading previous research session...", color="magenta")
+            args = final_resp_msg.tool_calls[0]["args"]
+            text_files_saved = set(CodeFile(f) for f in args["files_to_work_on"] + args["reference_files"])
+            image_paths_saved = args["template_images"]
+            print_tool_message("final_response_researcher", args)
+            state = {"messages": messages}
+            state = ask_human(state)
+            last_human = state["messages"][-1]
+            if last_human.content == "Approved by human":
+                return ( (text_files_saved, image_paths_saved), None )
+            else:
+                return ( None, state["messages"] )  # Not approved, return updated messages
+        return (None, None)
+
     def research_task(self, task):
         if not self.silent:
             print_formatted("Researcher starting its work", color="green")
-            print_formatted("👋 Hey! I'm looking for files on which we will work on together!", color="light_blue")
+            print_formatted("\U0001F44B Hey! I'm looking for files on which we will work on together!", color="light_blue")
 
         system_prompt_template = load_prompt("researcher_system")
         system_message = SystemMessage(
             content=system_prompt_template.format(task=task, project_rules=read_coderrules())
         )
 
-        # Continue previous dialogue if available; otherwise start fresh
         if self.prev_messages:
-            messages = [system_message] + self.prev_messages
+            result, updated_messages = self._start_from_previous_research(system_message)
+            if result is not None:
+                return result
+            if updated_messages is not None:
+                messages = updated_messages
+            else:
+                messages = [system_message] + self.prev_messages
         else:
             messages = [system_message, HumanMessage(content=list_directory_tree(work_dir))]
+
         inputs = {"messages": messages}
         researcher_response = self.researcher.invoke(inputs, {"recursion_limit": 100})["messages"][-3]
-        response_args = researcher_response.tool_calls[0]["args"]
-        text_files = set(CodeFile(f) for f in response_args["files_to_work_on"] + response_args["reference_files"])
-        image_paths = response_args["template_images"]
+        args = researcher_response.tool_calls[0]["args"]
+        text_files = set(CodeFile(f) for f in args["files_to_work_on"] + args["reference_files"])
+        image_paths = args["template_images"]
 
         return text_files, image_paths
+
+
 
 
 if __name__ == "__main__":
