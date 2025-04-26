@@ -138,20 +138,16 @@ class Researcher:
             if hasattr(msg, "tool_calls") and msg.tool_calls and msg.tool_calls[0]["name"] == "final_response_researcher":
                 final_resp_msg = msg
                 break
-        if final_resp_msg is not None:
-            print_formatted("Uploading previous research session...", color="magenta")
-            args = final_resp_msg.tool_calls[0]["args"]
-            text_files_saved = set(CodeFile(f) for f in args["files_to_work_on"] + args["reference_files"])
-            image_paths_saved = args["template_images"]
-            print_tool_message("final_response_researcher", args)
-            state = {"messages": messages}
-            state = ask_human(state)
-            last_human = state["messages"][-1]
-            if last_human.content == "Approved by human":
-                return ( (text_files_saved, image_paths_saved), None )
-            else:
-                return ( None, state["messages"] )  # Not approved, return updated messages
-        return (None, None)
+
+        print_formatted("Uploading previous research session...", color="magenta")
+        args = final_resp_msg.tool_calls[0]["args"]
+        text_files_saved = set(CodeFile(f) for f in args["files_to_work_on"] + args["reference_files"])
+        image_paths_saved = args["template_images"]
+        print_tool_message("final_response_researcher", args)
+        state = {"messages": messages}
+        state = ask_human(state)
+        approved = state["messages"][-1].content == "Approved by human"
+        return ((text_files_saved, image_paths_saved), None) if approved else (None, state["messages"])
 
     def research_task(self, task):
         if not self.silent:
@@ -181,8 +177,6 @@ class Researcher:
         image_paths = args["template_images"]
 
         return text_files, image_paths
-
-
 
 
 if __name__ == "__main__":
