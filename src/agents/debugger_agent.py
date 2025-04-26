@@ -102,8 +102,7 @@ class Debugger:
 
         for tool_call in last_ai_message.tool_calls:
             if tool_call["name"] == "create_file_with_code":
-                filename = tool_call["args"]["filename"]
-                new_file = CodeFile(filename, is_modified=True)
+                new_file = CodeFile(tool_call["args"]["filename"], is_modified=True)
                 self.files.add(new_file)
             elif tool_call["name"] in ["replace_code", "insert_code"]:
                 filename = tool_call["args"]["filename"]
@@ -127,6 +126,7 @@ class Debugger:
         logs = check_application_logs()
         log_message = HumanMessage(content="Logs:\n" + logs)
         state["messages"].append(log_message)
+        
         return state
 
     def frontend_screenshots(self, state):
@@ -157,6 +157,7 @@ class Debugger:
 
     def after_check_log_condition(self, state):
         last_message = state["messages"][-1]
+        
         if last_message.content.endswith("Logs are correct"):
             if self.playwright_code:
                 return "frontend_screenshots"
@@ -169,6 +170,7 @@ class Debugger:
         print_formatted("Debugger starting its work", color="green")
         print_formatted("🕵️‍♂️ Need to improve your code? I can help!", color="light_blue")
         file_contents = check_file_contents(self.files, self.work_dir)
+        
         inputs = {
             "messages": [
                 self.system_message,
@@ -178,6 +180,7 @@ class Debugger:
                 HumanMessage(content=f"Human feedback: {self.human_feedback}"),
             ]
         }
+        
         if self.images:
             inputs["messages"].append(HumanMessage(content=self.images))
         if self.playwright_code:

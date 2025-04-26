@@ -1,7 +1,7 @@
 import os
 import base64
 import requests
-from src.utilities.start_work_functions import file_folder_ignored, CoderIgnore, Work
+from src.utilities.start_work_functions import file_folder_ignored, Work
 from src.utilities.print_formatters import print_formatted
 from dotenv import load_dotenv, find_dotenv
 from todoist_api_python.api import TodoistAPI

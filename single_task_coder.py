@@ -1,6 +1,5 @@
 if __name__ == "__main__":
     from src.utilities.start_work_functions import print_ascii_logo
-
     print_ascii_logo()
 from dotenv import find_dotenv
 from src.utilities.set_up_dotenv import set_up_env_coder_pipeline
@@ -19,10 +18,10 @@ from src.agents.frontend_feedback import write_screenshot_codes
 from src.utilities.user_input import user_input
 from src.utilities.start_project_functions import set_up_dot_clean_coder_dir
 from src.utilities.util_functions import create_frontend_feedback_story, join_paths
+from src.utilities.script_execution_utils import logs_from_running_script
 from src.tools.rag.rag_utils import update_descriptions
 from src.tools.rag.index_file_descriptions import prompt_index_project_files
 from src.linters.static_analisys import python_static_analysis
-from src.utilities.script_execution_utils import logs_from_running_script
 
 
 use_frontend_feedback = bool(os.getenv("FRONTEND_URL"))
@@ -55,7 +54,6 @@ def run_clean_coder_pipeline(task: str, work_dir: str, task_id: str=None):
     # static analysis
     files_to_check = [file for file in files if file.filename.endswith(".py") and file.is_modified]
     analysis_result = python_static_analysis(files_to_check)
-
     if analysis_result:
         # Automatically proceed to debugger with static analysis results
         human_message = analysis_result
@@ -77,7 +75,7 @@ def run_clean_coder_pipeline(task: str, work_dir: str, task_id: str=None):
         if execution_message and human_message not in ["o", "ok"]:
             human_message = execution_message + "\n\n" + human_message
 
-    _update_file_descriptions(files)
+    update_descriptions([file for file in files if file.is_modified])
 
 
     debugger = Debugger(files, work_dir, human_message, image_paths, playwright_codes)
