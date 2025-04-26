@@ -105,9 +105,6 @@ class Debugger:
                 filename = tool_call["args"]["filename"]
                 new_file = CodeFile(filename, is_modified=True)
                 self.files.add(new_file)
-                # Dodanie logowania z wersji upstream
-                log_message = f"File {filename} created."
-                state = write_and_append_log(state, log_message, os.path.join(self.work_dir, "logs.txt"))
             elif tool_call["name"] in ["replace_code", "insert_code"]:
                 filename = tool_call["args"]["filename"]
                 for file in self.files:

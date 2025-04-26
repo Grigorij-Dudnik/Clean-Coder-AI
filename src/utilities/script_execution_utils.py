@@ -2,6 +2,7 @@ import datetime
 import os
 import subprocess
 from langchain_core.messages import HumanMessage
+from src.utilities.util_functions import join_paths
 
 
 def create_script_execution_env(work_dir: str, silent: bool = True) -> str:
@@ -12,16 +13,16 @@ def create_script_execution_env(work_dir: str, silent: bool = True) -> str:
         silent: If True, suppresses environment setup output
     """
     work_dir = os.path.abspath(work_dir)
-    env_path = os.path.join(work_dir, "env")
+    env_path = join_paths(work_dir, "env")
     if not os.path.exists(env_path):
         import venv
 
         venv.create(env_path, with_pip=True)
         stdout = subprocess.DEVNULL if silent else None
         stderr = subprocess.DEVNULL if silent else None
-        subprocess.run([os.path.join(env_path, "bin", "pip"), "install", "-U", "pip"],
+        subprocess.run([join_paths(env_path, "bin", "pip"), "install", "-U", "pip"],
                     check=True, stdout=stdout, stderr=stderr)
-    return os.path.join(env_path, "bin", "python")
+    return join_paths(env_path, "bin", "python")
 
 
 def run_script_in_env(script_path: str, work_dir: str, silent_setup: bool = True) -> tuple[str, str]:
@@ -34,9 +35,9 @@ def run_script_in_env(script_path: str, work_dir: str, silent_setup: bool = True
     """
     work_dir = os.path.abspath(work_dir)
     python_path = create_script_execution_env(work_dir, silent=silent_setup)
-    req_file = os.path.join(work_dir, "requirements.txt")
+    req_file = join_paths(work_dir, "requirements.txt")
     if os.path.exists(req_file):
-        pip_path = os.path.join(os.path.dirname(python_path), "pip")
+        pip_path = join_paths(os.path.dirname(python_path), "pip")
         stdout = subprocess.DEVNULL if silent_setup else None
         stderr = subprocess.DEVNULL if silent_setup else None
         subprocess.run([pip_path, "install", "-r", req_file],
@@ -70,7 +71,7 @@ def logs_from_running_script(work_dir: str, execute_file_name: str, silent_setup
         silent_setup: If True, suppresses environment setup output
     """
     try:
-        script_path = os.path.join(work_dir, execute_file_name)
+        script_path = join_paths(work_dir, execute_file_name)
         stdout, stderr = run_script_in_env(script_path, work_dir, silent_setup=silent_setup)
         return format_log_message(stdout=stdout, stderr=stderr)
     except subprocess.CalledProcessError as e:

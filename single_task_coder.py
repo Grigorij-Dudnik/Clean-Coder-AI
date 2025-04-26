@@ -18,7 +18,7 @@ from src.agents.debugger_agent import Debugger
 from src.agents.frontend_feedback import write_screenshot_codes
 from src.utilities.user_input import user_input
 from src.utilities.start_project_functions import set_up_dot_clean_coder_dir
-from src.utilities.util_functions import create_frontend_feedback_story
+from src.utilities.util_functions import create_frontend_feedback_story, join_paths
 from src.tools.rag.rag_utils import update_descriptions
 from src.tools.rag.index_file_descriptions import prompt_index_project_files
 from src.linters.static_analisys import python_static_analysis
@@ -49,7 +49,7 @@ def run_clean_coder_pipeline(task: str, work_dir: str, task_id: str=None):
 
     # Execute the script and collect logs
     execution_message = None
-    if execute_file_name and os.path.exists(os.path.join(work_dir, execute_file_name)):
+    if execute_file_name and os.path.exists(join_paths(work_dir, execute_file_name)):
         execution_message = logs_from_running_script(work_dir, execute_file_name, silent_setup=True)
 
     # static analysis
