@@ -1,6 +1,7 @@
 import datetime
 import os
 import subprocess
+import platform
 from langchain_core.messages import HumanMessage
 from src.utilities.util_functions import join_paths
 
@@ -14,15 +15,28 @@ def create_script_execution_env(work_dir: str, silent: bool = True) -> str:
     """
     work_dir = os.path.abspath(work_dir)
     env_path = join_paths(work_dir, "env")
+    
+    is_windows = platform.system() == "Windows"
+    bin_dir = "Scripts" if is_windows else "bin"
+    python_exe = "python.exe" if is_windows else "python"
+    pip_exe = "pip.exe" if is_windows else "pip"
+    
     if not os.path.exists(env_path):
         import venv
-
         venv.create(env_path, with_pip=True)
         stdout = subprocess.DEVNULL if silent else None
         stderr = subprocess.DEVNULL if silent else None
-        subprocess.run([join_paths(env_path, "bin", "pip"), "install", "-U", "pip"],
-                    check=True, stdout=stdout, stderr=stderr)
-    return join_paths(env_path, "bin", "python")
+        
+        pip_path = join_paths(env_path, bin_dir, pip_exe)
+        
+        try:
+            subprocess.run([pip_path, "install", "-U", "pip"],
+                        check=True, stdout=stdout, stderr=stderr)
+        except Exception:
+            pass
+    
+    python_path = join_paths(env_path, bin_dir, python_exe)
+    return python_path
 
 
 def run_script_in_env(script_path: str, work_dir: str, silent_setup: bool = True) -> tuple[str, str]:
@@ -36,12 +50,22 @@ def run_script_in_env(script_path: str, work_dir: str, silent_setup: bool = True
     work_dir = os.path.abspath(work_dir)
     python_path = create_script_execution_env(work_dir, silent=silent_setup)
     req_file = join_paths(work_dir, "requirements.txt")
+    
     if os.path.exists(req_file):
-        pip_path = join_paths(os.path.dirname(python_path), "pip")
+        is_windows = platform.system() == "Windows"
+        bin_dir = "Scripts" if is_windows else "bin"
+        pip_exe = "pip.exe" if is_windows else "pip"
+        
+        pip_path = join_paths(os.path.dirname(os.path.dirname(python_path)), bin_dir, pip_exe)
+        
         stdout = subprocess.DEVNULL if silent_setup else None
         stderr = subprocess.DEVNULL if silent_setup else None
-        subprocess.run([pip_path, "install", "-r", req_file],
-                    check=True, stdout=stdout, stderr=stderr)
+        try:
+            subprocess.run([pip_path, "install", "-r", req_file],
+                        check=True, stdout=stdout, stderr=stderr)
+        except Exception:
+            pass
+    
     try:
         result = subprocess.run([python_path, script_path], capture_output=True, text=True, check=True)
         return result.stdout, result.stderr
