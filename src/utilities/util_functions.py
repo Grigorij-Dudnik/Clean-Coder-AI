@@ -18,7 +18,7 @@ todoist_api = TodoistAPI(os.getenv("TODOIST_API_KEY"))
 PROJECT_ID = os.getenv("TODOIST_PROJECT_ID")
 
 
-TOOL_NOT_EXECUTED_WORD = "Tool not been executed. "
+TOOL_NOT_EXECUTED_WORD = "Tool haven't been executed. "
 WRONG_TOOL_CALL_WORD = "Wrong tool call. "
 
 storyfile_template = """<This is the story of your project for a frontend feedback agent. Modify it according to commentaries provided in <> brackets.>
@@ -76,9 +76,6 @@ def watch_file(filename, work_dir, line_numbers=True):
     return file_content
 
 
-
-
-
 def check_application_logs():
     """Check out logs to see if application works correctly."""
     try:
@@ -93,7 +90,7 @@ def check_application_logs():
         return f"{type(e).__name__}: {e}"
 
 
-def see_image(filename, work_dir):
+def encode_image(filename, work_dir):
     with open(join_paths(work_dir, filename), "rb") as image_file:
         img_encoded = base64.b64encode(image_file.read()).decode("utf-8")
     return img_encoded
@@ -102,20 +99,22 @@ def see_image(filename, work_dir):
 def convert_images(image_paths):
     images = []
     for image_path in image_paths:
-        if not os.path.exists(join_paths(work_dir, image_path)):
-            print_formatted(f"Image not exists: {image_path}", color="yellow")
-            continue
-        images.extend(
-            [
-                {"type": "text", "text": f"I###\n{image_path}"},
-                {
-                    "type": "image_url",
-                    "image_url": {"url": f"data:image/png;base64,{see_image(image_path, work_dir)}"},
-                },
-            ]
-        )
+        images.extend(convert_image(image_path))
 
     return images
+
+
+def convert_image(image_path):
+    if not os.path.exists(join_paths(work_dir, image_path)):
+        print_formatted(f"Image not exists: {image_path}", color="yellow")
+        return
+    return [
+            {"type": "text", "text": f"I###\n{image_path}"},
+            {
+                "type": "image_url",
+                "image_url": {"url": f"data:image/png;base64,{encode_image(image_path, work_dir)}"},
+            },
+        ]
 
 
 def join_paths(*args):
@@ -198,11 +197,16 @@ def exchange_file_contents(state, files, work_dir):
 
 
 def bad_tool_call_looped(state):
-    last_tool_messages = [m for m in state["messages"] if m.type == "tool"][-4:]
+    """
+    Return True after three consecutive tool messages that start with
+    WRONG_TOOL_CALL_WORD, signalling the agent is stuck and should ask
+    the human for help.
+    """
+    last_tool_messages = [m for m in state["messages"] if m.type == "tool"][-3:]
     tool_not_executed_msgs = [
         m for m in last_tool_messages if isinstance(m.content, str) and m.content.startswith(WRONG_TOOL_CALL_WORD)
     ]
-    if len(tool_not_executed_msgs) == 4:
+    if len(tool_not_executed_msgs) == 3:
         print_formatted(
             "Seems like AI been looped. Please suggest it how to introduce change correctly:", color="yellow"
         )

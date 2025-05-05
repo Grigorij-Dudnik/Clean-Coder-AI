@@ -4,7 +4,7 @@ import os
 from dotenv import load_dotenv, find_dotenv
 from src.linters.syntax_checker_functions import check_syntax
 from src.utilities.start_work_functions import file_folder_ignored
-from src.utilities.util_functions import join_paths, WRONG_TOOL_CALL_WORD
+from src.utilities.util_functions import join_paths, WRONG_TOOL_CALL_WORD, TOOL_NOT_EXECUTED_WORD
 from src.utilities.user_input import user_input
 from src.tools.rag.retrieval import retrieve
 
@@ -49,7 +49,7 @@ def prepare_see_file_tool(work_dir):
     @tool
     def see_file(filename: Annotated[str, "Name and path of file to check."]):
         """
-        Check contents of file.
+        Check contents of code file.
         """
         try:
             if file_folder_ignored(filename):
@@ -65,6 +65,16 @@ def prepare_see_file_tool(work_dir):
             return f"{type(e).__name__}: {e}"
 
     return see_file
+
+@tool
+def see_image(filename: Annotated[str, "Name and path of image file to check."]):
+    """
+    Check contents of image file.
+    """
+    if file_folder_ignored(filename):
+        return "You are not allowed to work with this file."
+    return "Image added to context."
+
 
 
 @tool
@@ -110,7 +120,7 @@ def prepare_insert_code_tool(work_dir):
                 message = "Never accept changes you don't understand. Type (o)k if you accept or provide commentary. "
                 human_message = user_input(message)
                 if human_message not in ["o", "ok"]:
-                    return f"Human: {human_message}"
+                    return TOOL_NOT_EXECUTED_WORD + f"Human: '{human_message}'"
                 file.seek(0)
                 file.truncate()
                 file.write(file_contents)
@@ -148,7 +158,7 @@ def prepare_replace_code_tool(work_dir):
                 message = "Never accept changes you don't understand. Type (o)k if you accept or provide commentary. "
                 human_message = user_input(message)
                 if human_message not in ["o", "ok"]:
-                    return f"Human: {human_message}"
+                    return TOOL_NOT_EXECUTED_WORD + f"Human: '{human_message}'"
                 file.seek(0)
                 file.truncate()
                 file.write(file_contents)
@@ -175,7 +185,7 @@ def prepare_create_file_tool(work_dir):
             message = "Never accept changes you don't understand. Type (o)k if you accept or provide commentary. "
             human_message = user_input(message)
             if human_message not in ["o", "ok"]:
-                return f"Human: {human_message}"
+                return TOOL_NOT_EXECUTED_WORD + f"Human: '{human_message}'"
 
             full_path = join_paths(work_dir, filename)
             directory = os.path.dirname(full_path)

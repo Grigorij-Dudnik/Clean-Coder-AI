@@ -12,7 +12,7 @@ from dotenv import load_dotenv, find_dotenv
 from langchain.tools import tool
 from src.utilities.llms import init_llms_medium_intelligence
 from src.utilities.print_formatters import print_formatted
-from src.utilities.util_functions import check_file_contents, exchange_file_contents, bad_tool_call_looped, load_prompt
+from src.utilities.util_functions import check_file_contents, exchange_file_contents, bad_tool_call_looped, load_prompt, TOOL_NOT_EXECUTED_WORD
 from src.utilities.langgraph_common_functions import (
     call_model,
     call_tool,
@@ -71,8 +71,8 @@ class Executor:
         state = call_tool(state, self.tools)
 
         # auxiliary actions depending on tools called
-        messages = [msg for msg in state["messages"] if msg.type == "ai"]
-        last_ai_message = messages[-1]
+        ai_messages = [msg for msg in state["messages"] if msg.type == "ai"]
+        last_ai_message = ai_messages[-1]
         if len(last_ai_message.tool_calls) > 1:
             for tool_call in last_ai_message.tool_calls:
                 state["messages"].append(ToolMessage(content="too much tool calls", tool_call_id=tool_call["id"]))
@@ -84,6 +84,10 @@ class Executor:
                 new_file = CodeFile(tool_call["args"]["filename"], is_modified=True)
                 self.files.add(new_file)
             elif tool_call["name"] in ["replace_code", "insert_code"]:
+                last_tool_message = [msg for msg in state["messages"] if msg.type == "tool"][-1]
+                # do not mark as modified if tool was not executed
+                if last_tool_message.content.startswith(TOOL_NOT_EXECUTED_WORD):
+                    continue
                 filename = tool_call["args"]["filename"]
                 for file in self.files:
                     if file.filename == filename:

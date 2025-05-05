@@ -120,6 +120,26 @@ def parse_project_tasks(tasks):
     return output_string
 
 
+def cleanup_research_histories() -> None:
+    """
+    Delete every file matching research_history_task_<id>.json inside
+    .clean_coder/research_histories when <id> is not among current
+    Todoist task IDs.
+    """
+    history_dir = join_paths(work_dir, ".clean_coder", "research_histories")
+    if not os.path.exists(history_dir):
+        return
+
+    active_ids = {str(t.id) for t in fetch_tasks()}
+
+    for fname in os.listdir(history_dir):
+        if fname.startswith("research_history_task_") and fname.endswith(".json"):
+            task_id = fname[len("research_history_task_") : -len(".json")]
+            if task_id not in active_ids:
+                os.remove(join_paths(history_dir, fname))
+
+
+
 def actualize_progress_description_file(task_name_description):
     progress_description = read_progress_description()
     actualize_description_prompt = PromptTemplate.from_template(actualize_progress_description_prompt_template)
@@ -220,19 +240,42 @@ def setup_todoist_project():
         store_project_id(selected_project_id)
 
 
-def prompt_user_if_planning_needed():
-    choice = questionary.select(
-        "Choose an option:",
-        choices=[
-            "Start/continue planning my project (Default)",
-            "Project is fully planned in Todoist, just execute tasks",
-        ],
-        style=QUESTIONARY_STYLE,
-    ).ask()
-    return choice == "Start/continue planning my project (Default)"
+def ask_user_for_project_action():
+    """
+    Asks the user what action they want to perform for the project.
+    Returns one of: 'start_planning', 'execute_tasks', 'redescribe_project'.
+    """
+    choices = [
+        "Start/continue planning my project (Default)",
+        "Project is fully planned in Todoist, just execute tasks",
+        "Describe project again",
+    ]
+    answer = questionary.select("Choose an option:", choices, style=QUESTIONARY_STYLE).ask()
 
+    if answer == "Start/continue planning my project (Default)":
+        return "start_planning"
+    elif answer == "Project is fully planned in Todoist, just execute tasks":
+        return "execute_tasks"
+    elif answer == "Describe project again":
+        return "redescribe_project"
+
+
+def redescribe_project_plan():
+    """
+    Prompts the user for a new project plan and clears the progress description completely.
+    """
+    from src.utilities.start_project_functions import create_project_plan_file
+    from src.utilities.util_functions import join_paths
+
+    work_dir = os.getenv("WORK_DIR")
+    create_project_plan_file(work_dir)
+    with open(join_paths(work_dir, ".clean_coder", "manager_progress_description.txt"), "w") as f:
+        f.write("<empty>")
 
 def get_manager_messages(saved_messages_path):
+    """
+    Loads or initializes the manager's message history, adds the system message, and determines whether to enter planning mode or execution mode based on user input. Ensures do_planning is always defined before any conditional logic.
+    """
     tasks = fetch_tasks()
     if os.path.exists(saved_messages_path):
         # continue previous work
@@ -250,11 +293,18 @@ def get_manager_messages(saved_messages_path):
             HumanMessage(content=list_directory_tree(work_dir)),
         ]
 
-    # Add system message as first one and execution message if needed
+    # Add system message as first one
     messages = [load_system_message()] + messages
 
     # Determine if planning is needed based on existing tasks
-    do_planning = prompt_user_if_planning_needed() if tasks else True
+    action = ask_user_for_project_action()
+
+    do_planning = True
+    if action == "execute_tasks":
+        do_planning = False
+        messages.append(HumanMessage(content="Tasks are fully planned. Continuing with execution."))
+    elif action == "redescribe_project":
+        redescribe_project_plan()
 
     if not do_planning:
         messages.append(HumanMessage(content="Tasks are completely done and all you need to do is to execute them."))
@@ -297,19 +347,6 @@ def research_second_task(task) -> None:
 
     # Run researcher on task
     researcher = Researcher(silent=True, task_id=task.id)
-    files, image_paths = researcher.research_task(
+    researcher.research_task(
         f"{task.content}\n\n{task.description}"
-    )
-
-    # Format researched files
-    files_text = "\n".join(f"- {f.filename}" for f in files)
-    images_text = "\n".join(f"- {img}" for img in image_paths)
-    researched_files_text = f"Files to modify:\n{files_text}\n\nTemplate images:\n{images_text}"
-
-    # Update task description
-    new_description = task.description + f"\n\n<researched_files>\n{researched_files_text}\n</researched_files>"
-
-    todoist_api.update_task(
-        task_id=task.id,
-        description=new_description
     )

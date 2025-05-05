@@ -10,6 +10,8 @@ from pathspec.patterns import GitWildMatchPattern
 
 
 def read_frontend_feedback_story():
+    """Return the text stored in `.clean_coder/frontend_feedback_story.txt`
+    located inside the active work directory."""
     frontend_feedback_story_path = os.path.join(Work.dir(), ".clean_coder", "frontend_feedback_story.txt")
     with open(frontend_feedback_story_path, "r") as file:
         return file.read()

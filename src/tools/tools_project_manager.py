@@ -3,7 +3,7 @@ from typing_extensions import Annotated
 from todoist_api_python.api import TodoistAPI
 import os
 from src.utilities.print_formatters import print_formatted, print_text_snippet
-from src.utilities.manager_utils import actualize_progress_description_file, research_second_task
+from src.utilities.manager_utils import actualize_progress_description_file, research_second_task, cleanup_research_histories
 from src.utilities.user_input import user_input
 from src.utilities.graphics import task_completed_animation
 from src.utilities.util_functions import join_paths
@@ -17,7 +17,6 @@ from concurrent.futures import ThreadPoolExecutor
 
 
 load_dotenv(find_dotenv())
-load_dotenv()
 
 work_dir = os.getenv("WORK_DIR")
 load_dotenv(join_paths(work_dir, ".clean_coder/.env"))
@@ -148,6 +147,8 @@ def finish_project_planning(dummy: Annotated[str, "Type 'ok' to proceed."]):
 
     # Mark task as done
     todoist_api.close_task(task_id=first_task.id)
+
+    cleanup_research_histories()
 
     task_completed_animation()
 

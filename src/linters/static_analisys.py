@@ -18,6 +18,22 @@ def python_static_analysis(files):
     return outputs
 
 
+def js_ts_static_analysis(files):
+    outputs = ""
+    for file in files:
+        command = [
+            "npx",
+            "biome",
+            "check",
+            join_paths(os.getenv("WORK_DIR"), file.filename),
+            #"--config-path", "src/linters/biome-config.json"  # only if you want non-default settings
+        ]
+        result = subprocess.run(command, capture_output=True, text=True, encoding="utf-8")
+        if result.stdout.strip() != "All checks passed!":
+            outputs += f"\n\n---\n{file.filename}:\n\n{result.stdout}"
+
+    return outputs
+
 # Print results
 # print("STDOUT:", result.stdout)
 # print("STDERR:", result.stderr)

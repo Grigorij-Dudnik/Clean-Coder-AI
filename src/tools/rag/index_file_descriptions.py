@@ -18,7 +18,7 @@ from src.utilities.manager_utils import QUESTIONARY_STYLE
 from src.utilities.objects import CodeFile
 from tqdm import tqdm
 import glob
-from chromadb.utils import embedding_functions
+
 
 
 load_dotenv(find_dotenv())
@@ -76,6 +76,7 @@ def is_code_file(file_path):
 
 # read file content. place name of file in the top
 def get_content(file):
+    """Read and return full text content of the specified code file within WORK_DIR."""
     with open(join_paths(work_dir, file.filename), "r", encoding="utf-8") as file:
         content = file.read()
     return content

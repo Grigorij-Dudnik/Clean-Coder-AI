@@ -179,7 +179,7 @@ def print_tool_message(tool_name, tool_input=None):
         else:
             print_text_snippet(tool_input["test_instruction"], title="Instruction:")
         print_formatted(
-            "Have any questions about Clean Coder or want to share your experience? Check out our Discord server https://discord.com/invite/8gat7Pv7QJ 😉",
+            "Clean Coder helped? Leave a star to support authors https://github.com/Grigorij-Dudnik/Clean-Coder-AI ⭐",
             color="green",
         )
     elif tool_name == "finish_project_planning":

@@ -1,6 +1,7 @@
 if __name__ == "__main__":
     from src.utilities.start_work_functions import print_ascii_logo
     print_ascii_logo()
+
 from dotenv import find_dotenv
 from src.utilities.set_up_dotenv import set_up_env_coder_pipeline
 
@@ -10,7 +11,7 @@ if not find_dotenv():
 from concurrent.futures import ThreadPoolExecutor
 import os
 from src.agents.researcher_agent import Researcher
-from src.agents.doc_harvester import Doc_harvester
+
 from src.agents.planner_agent import planning
 from src.agents.executor_agent import Executor
 from src.agents.debugger_agent import Debugger

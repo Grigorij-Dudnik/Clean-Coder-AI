@@ -17,9 +17,12 @@ from langchain_core.messages import BaseMessage, HumanMessage, AIMessage
 from langchain_core.load import dumps
 from langgraph.graph import StateGraph
 from src.tools.tools_project_manager import add_task, modify_task, finish_project_planning, reorder_tasks
-from src.tools.tools_coder_pipeline import prepare_list_dir_tool, prepare_see_file_tool, ask_human_tool, retrieve_files_by_semantic_query
+from src.tools.tools_coder_pipeline import (
+    prepare_list_dir_tool, prepare_see_file_tool, see_image,
+    ask_human_tool, retrieve_files_by_semantic_query
+)
 from src.tools.rag.index_file_descriptions import prompt_index_project_files
-from src.utilities.util_functions import save_state_history_to_disk, join_paths
+from src.utilities.util_functions import save_state_history_to_disk, join_paths, convert_image
 from src.utilities.manager_utils import (
     actualize_tasks_list_and_progress_description,
     setup_todoist_project_if_needed,
@@ -83,6 +86,9 @@ class Manager:
         state = call_tool(state, self.tools)
         if len(last_ai_message.tool_calls) == 0:
             state["messages"].append(HumanMessage(content=no_tools_msg))
+        for tool_call in last_ai_message.tool_calls:
+            if tool_call["name"] == "see_image":
+                state["messages"].append(HumanMessage(content=convert_image(tool_call["args"]["filename"])))
         state = actualize_tasks_list_and_progress_description(state)
         return state
 
@@ -96,6 +102,10 @@ class Manager:
 
     # just functions
     def cut_off_context(self, state):
+        """
+        Trims the message history in the state to keep only the most recent context for the agent.
+        Keeps the last ~30 messages, starting from the most recent 'ai' message, and always includes the system message at the beginning.
+        """
         approx_nr_msgs_to_save = 30
         if len(state["messages"]) > approx_nr_msgs_to_save:
             last_messages = state["messages"][-approx_nr_msgs_to_save:]
@@ -134,6 +144,7 @@ class Manager:
             finish_project_planning,
             list_dir,
             see_file,
+            see_image,
         ]
         if vdb_available():
             tools.append(retrieve_files_by_semantic_query)
