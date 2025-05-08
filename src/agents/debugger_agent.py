@@ -21,6 +21,8 @@ from src.utilities.util_functions import (
     read_coderrules,
     convert_images,
     list_directory_tree,
+    exchange_file_contents,
+    TOOL_NOT_EXECUTED_WORD,
 )
 from src.utilities.llms import init_llms_medium_intelligence
 from src.utilities.langgraph_common_functions import (
@@ -106,6 +108,10 @@ class Debugger:
                 new_file = CodeFile(tool_call["args"]["filename"], is_modified=True)
                 self.files.add(new_file)
             elif tool_call["name"] in ["replace_code", "insert_code"]:
+                last_tool_message = [msg for msg in state["messages"] if msg.type == "tool"][-1]
+                # do not mark as modified if tool was not executed
+                if last_tool_message.content.startswith(TOOL_NOT_EXECUTED_WORD):
+                    continue
                 filename = tool_call["args"]["filename"]
                 for file in self.files:
                     if file.filename == filename:
@@ -117,6 +123,7 @@ class Debugger:
                 if analysis_result:
                     state["messages"].append(HumanMessage(content=analysis_result))
 
+        state = exchange_file_contents(state, self.files, self.work_dir)
 
         return state
 

@@ -9,6 +9,7 @@ recorder = VoiceRecorder()
 
 
 def user_input(prompt=""):
+    """Prompt the user for input via keyboard or microphone and return the resulting sentence."""
     print_formatted(prompt + "Or use (m)icrophone to tell:", color="cyan", bold=True)
     user_sentence = input()
     if user_sentence == "m":
