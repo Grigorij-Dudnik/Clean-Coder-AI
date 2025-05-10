@@ -8,6 +8,8 @@ import os
 import sys
 from termcolor import colored
 
+os.environ["TOKENIZERS_PARALLELISM"] = "false"
+
 
 def set_up_env_coder_pipeline():
     envs = {}

@@ -29,7 +29,7 @@ from src.utilities.llms import init_llms_medium_intelligence
 from src.utilities.langgraph_common_functions import (
     call_model,
     call_tool,
-    ask_human,
+    debugger_ask_human,
     after_ask_human_condition,
     multiple_tools_msg,
     no_tools_msg,
@@ -77,7 +77,7 @@ class Debugger:
         debugger_workflow.add_node("check_log", self.check_log)
         debugger_workflow.add_node("frontend_screenshots", self.frontend_screenshots)
         debugger_workflow.add_node("human_help", agent_looped_human_help)
-        debugger_workflow.add_node("human_end_process_confirmation", ask_human)
+        debugger_workflow.add_node("human_end_process_confirmation", debugger_ask_human)
 
         debugger_workflow.set_entry_point("agent")
 

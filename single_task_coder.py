@@ -25,6 +25,7 @@ from src.tools.rag.index_file_descriptions import prompt_index_project_files
 from src.linters.static_analisys import python_static_analysis
 
 
+os.environ["TOKENIZERS_PARALLELISM"] = "false"
 use_frontend_feedback = bool(os.getenv("FRONTEND_URL"))
 execute_file_name = os.getenv("EXECUTE_FILE_NAME", "main.py")
 
@@ -75,8 +76,6 @@ def run_clean_coder_pipeline(task: str, work_dir: str, task_id: str=None):
 
         if execution_message and human_message not in ["o", "ok"]:
             human_message = execution_message + "\n\n" + human_message
-
-    update_descriptions([file for file in files if file.is_modified])
 
 
     debugger = Debugger(files, work_dir, human_message, image_paths, playwright_codes)
