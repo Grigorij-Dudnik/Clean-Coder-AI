@@ -38,6 +38,10 @@ class ScreenshotCodingStructure(BaseModel):
 
 
 def write_screenshot_codes(task, plan, work_dir):
+    """
+    Build a Playwright script that captures a screenshot for frontend feedback,
+    or yields None when no screenshot is necessary.
+    """
     story = read_frontend_feedback_story()
     story = story.format(frontend_url=os.environ["FRONTEND_URL"])
     prompt = frontend_feedback_prompt_template.format(
@@ -79,6 +83,10 @@ p.stop()
 
 
 def execute_screenshot_codes(playwright_code):
+    """
+    Execute a Playwright script and wrap the screenshot (or error message)
+    inside a HumanMessage object.
+    """
     code_execution_variables = {}
     exec(playwright_code, {}, code_execution_variables)
     screenshot_bytes = code_execution_variables["output"]

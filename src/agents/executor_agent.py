@@ -73,12 +73,13 @@ class Executor:
         # auxiliary actions depending on tools called
         ai_messages = [msg for msg in state["messages"] if msg.type == "ai"]
         last_ai_message = ai_messages[-1]
-        if len(last_ai_message.tool_calls) > 1:
-            for tool_call in last_ai_message.tool_calls:
-                state["messages"].append(ToolMessage(content="too much tool calls", tool_call_id=tool_call["id"]))
-            state["messages"].append(HumanMessage(content=multiple_tools_msg))
-        elif len(last_ai_message.tool_calls) == 0:
+        # if len(last_ai_message.tool_calls) > 1:
+        #     for tool_call in last_ai_message.tool_calls:
+        #         state["messages"].append(ToolMessage(content="too much tool calls", tool_call_id=tool_call["id"]))
+        #     state["messages"].append(HumanMessage(content=multiple_tools_msg))
+        if len(last_ai_message.tool_calls) == 0:
             state["messages"].append(HumanMessage(content=no_tools_msg))
+
         for tool_call in last_ai_message.tool_calls:
             if tool_call["name"] == "create_file_with_code":
                 new_file = CodeFile(tool_call["args"]["filename"], is_modified=True)

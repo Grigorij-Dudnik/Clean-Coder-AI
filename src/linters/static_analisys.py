@@ -6,8 +6,8 @@ from src.utilities.util_functions import join_paths
 
 load_dotenv(find_dotenv())
 
-
 def python_static_analysis(files):
+    """Run ruff on each given CodeFile and concatenate non-empty outputs."""
     outputs = ""
     for file in files:
         command = ["ruff", "check", join_paths(os.getenv("WORK_DIR"), file.filename), "--config", "src/linters/ruff-rules.toml"]
@@ -19,6 +19,7 @@ def python_static_analysis(files):
 
 
 def js_ts_static_analysis(files):
+    """Run biome on each given CodeFile and concatenate non-empty outputs."""
     outputs = ""
     for file in files:
         command = [

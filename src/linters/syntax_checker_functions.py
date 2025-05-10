@@ -28,6 +28,7 @@ def check_syntax(file_content, filename):
 
 
 def parse_python(code):
+    """Validate a Python code string using ast.parse to ensure correct syntax."""
     try:
         ast.parse(code)
         return "Valid syntax"
@@ -108,6 +109,7 @@ def check_template_tag_balance(code, open_tag, close_tag):
 
 
 def bracket_balance(code, beginnig_bracket="{", end_bracket="}"):
+    """Check whether the specified opening and closing brackets are balanced in the code string."""
     opened_brackets_count = 0
 
     for char in code:
