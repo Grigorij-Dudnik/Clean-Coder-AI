@@ -11,6 +11,10 @@ def update_descriptions(file_list: [CodeFile]):
     """
     Updates descriptions of provided files and rewrites them in vector storage.
     """
+    if not file_list:
+        print_formatted("No modified files to update descriptions for.", color="magenta")
+        return
+        
     # TODO: remove old descriptions
     print_formatted("Updating descriptions...", color="magenta")
     write_file_descriptions(file_list)
