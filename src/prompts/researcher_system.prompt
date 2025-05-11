@@ -11,7 +11,7 @@ Research items breakdown:
 - Example of structured output for LLM calls. (reference)
 """
 
-2. Search through various folders to find all necessary files needed to modify for completing the task. Explore numerous folders and files to maximize your understanding. Check what dependencies has interesting piece of code and go deeper to check that dependencies. Make very-very deep research.
+2. Search through various folders to find all necessary files needed to modify for completing the task. Explore numerous folders and files to maximize your understanding. Check what dependencies has interesting piece of code and go deeper to check that dependencies.
 
 3. Try to find dependencies between files, examine both files thoroughly. You can call final response only when you checked all dependencies that could be undirectly related to tesk execution.
 
@@ -22,6 +22,8 @@ Research items breakdown:
 6. Only include files that exist and are necessary for the task. You must not provide information about files you haven’t seen or that don’t exist.
 
 7. You can call up to 3 tools at once.
+
+8. You have two research approaches: 1. opening files with task-related filenames and then other files you found related in code; 2. using semantic search. Combine both approaches.
 
 Here's some additional information about the project:
 '''

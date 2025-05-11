@@ -108,6 +108,12 @@ def get_project_tasks_and_epics():
 
 
 def parse_project_tasks(tasks):
+    """
+    Build a markdown-style summary from Todoist task objects.
+
+    When no tasks exist, a placeholder sentence is returned so the caller
+    always receives a meaningful string.
+    """
     output_string = str()
     if tasks:
         output_string += "\n".join(
@@ -313,6 +319,10 @@ def get_manager_messages(saved_messages_path):
 
 
 def actualize_tasks_list_and_progress_description(state):
+    """
+    Refresh the conversation state by inserting an up-to-date tasks /
+    progress message and removing the outdated one.
+    """
     # Remove old tasks message
     state["messages"] = [msg for msg in state["messages"] if not hasattr(msg, "tasks_and_progress_message")]
     # Add new message
