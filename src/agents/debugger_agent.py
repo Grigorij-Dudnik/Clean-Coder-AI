@@ -24,12 +24,11 @@ from src.utilities.util_functions import (
     exchange_file_contents,
     TOOL_NOT_EXECUTED_WORD,
 )
-from src.utilities.script_execution_utils import logs_from_running_script
+from src.utilities.script_execution_utils import logs_from_running_script, run_script_in_env, format_log_message
 from src.utilities.llms import init_llms_medium_intelligence
 from src.utilities.langgraph_common_functions import (
     call_model,
     call_tool,
-    debugger_ask_human,
     after_ask_human_condition,
     multiple_tools_msg,
     no_tools_msg,
@@ -39,6 +38,7 @@ from src.utilities.objects import CodeFile
 from src.agents.frontend_feedback import execute_screenshot_codes
 from src.linters.static_analisys import python_static_analysis
 from src.utilities.util_functions import load_prompt
+from src.utilities.user_input import user_input
 
 load_dotenv(find_dotenv())
 log_file_path = os.getenv("LOG_FILE")
@@ -77,7 +77,7 @@ class Debugger:
         debugger_workflow.add_node("check_log", self.check_log)
         debugger_workflow.add_node("frontend_screenshots", self.frontend_screenshots)
         debugger_workflow.add_node("human_help", agent_looped_human_help)
-        debugger_workflow.add_node("human_end_process_confirmation", debugger_ask_human)
+        debugger_workflow.add_node("human_end_process_confirmation", self.debugger_ask_human)
 
         debugger_workflow.set_entry_point("agent")
 
@@ -122,11 +122,14 @@ class Debugger:
                 if analysis_result:
                     state["messages"].append(HumanMessage(content=analysis_result))
                 if execute_file_name:
-                    message = logs_from_running_script(self.work_dir, execute_file_name, silent_setup=True)
-                    state["messages"].append(HumanMessage(content=message))
+                    self.stdout, self.stderr = run_script_in_env(self.work_dir, execute_file_name, silent_setup=True)
+                    if self.stderr:
+                        script_execution_message = format_log_message(self.stdout, self.stderr)
+                        state["messages"].append(HumanMessage(content=script_execution_message))
 
         state = exchange_file_contents(state, self.files, self.work_dir)
         return state
+
 
     def check_log(self, state: dict) -> dict:
         """Add server logs."""
@@ -172,6 +175,18 @@ class Debugger:
                 return "human_end_process_confirmation"
         else:
             return "agent"
+
+    def debugger_ask_human(self, state):
+        """Custom version of ask_human that handles script execution logs."""
+        human_message = user_input("Type (o)k to accept or provide commentary. ")
+        if human_message in ["o", "ok"]:
+            state["messages"].append(HumanMessage(content="Approved by human"))
+        else:
+            if execute_file_name:
+                state["messages"].append(HumanMessage(content=human_message + "\n\n" + format_log_message(self.stdout, self.stderr)))
+            else:
+                state["messages"].append(HumanMessage(content=human_message))
+        return state
 
     def do_task(self, task: str, plan: str) -> List[CodeFile]:
         print_formatted("Debugger starting its work", color="green")

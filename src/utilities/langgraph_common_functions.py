@@ -108,36 +108,6 @@ def ask_human(state):
         state["messages"].append(HumanMessage(content=human_message))
     return state
 
-def debugger_ask_human(state):
-    """Custom version of ask_human that handles script execution logs."""
-    last_messages = [msg for msg in state["messages"] if msg.type == "human"]
-    last_message = last_messages[-1] if last_messages else None
-    
-    contains_script_logs = last_message and "SCRIPT EXECUTION" in last_message.content
-    user_already_approved = last_message and not contains_script_logs and (
-        "fine" in last_message.content.lower() or 
-        "good" in last_message.content.lower() or
-        "ok" in last_message.content.lower() or
-        "working" in last_message.content.lower()
-    )
-    
-    if user_already_approved:
-        state["messages"].append(HumanMessage(content="Approved by human"))
-        return state
-    elif contains_script_logs:
-        human_message = user_input("Please confirm if the script output is correct (o/ok) or provide feedback: ")
-        if human_message.lower() in ["o", "ok"]:
-            state["messages"].append(HumanMessage(content="Approved by human"))
-        else:
-            state["messages"].append(HumanMessage(content=human_message))
-    else:
-        human_message = user_input("Type (o)k to accept or provide commentary: ")
-        if human_message.lower() in ["o", "ok"]:
-            state["messages"].append(HumanMessage(content="Approved by human"))
-        else:
-            state["messages"].append(HumanMessage(content=human_message))
-    
-    return state
 
 def agent_looped_human_help(state):
     human_message = user_input(
