@@ -162,6 +162,7 @@ def actualize_progress_description_file(task_name_description):
 
 
 def read_progress_description():
+    """Reads and returns the current manager progress description from file."""
     file_path = os.path.join(work_dir, ".clean_coder", "manager_progress_description.txt")
     if not os.path.exists(file_path):
         open(file_path, "a").close()  # Creates file if it doesn't exist
@@ -173,6 +174,7 @@ def read_progress_description():
 
 
 def move_task(task_id, epic_id):
+    """Moves a Todoist task to a specified epic (section) by ID."""
     command = {"type": "item_move", "uuid": str(uuid.uuid4()), "args": {"id": task_id, "section_id": epic_id}}
     commands_json = json.dumps([command])
     requests.post(
@@ -339,6 +341,7 @@ def actualize_tasks_list_and_progress_description(state):
 
 
 def load_system_message():
+    """Loads and formats the system message for the manager agent."""
     system_prompt_template = load_prompt("manager_system")
 
     if os.path.exists(os.path.join(work_dir, ".clean_coder/project_plan.txt")):

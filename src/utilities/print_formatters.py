@@ -33,14 +33,32 @@ def print_formatted_content_planner(content):
 def print_formatted_content(response):
     if isinstance(response.content, str):
         print_formatted(content=response.content, color="dark_grey")
-        for tool_call in response.tool_calls:
-            print_tool_message(tool_name=tool_call["name"], tool_input=tool_call["args"])
+        ordered_calls = _order_tool_calls(response.tool_calls, "args")
+        for call in ordered_calls:
+            print_tool_message(tool_name=call["name"], tool_input=call["args"])
     else:
+        tool_calls = []
         for response_part in response.content:
             if response_part["type"] == "text":
                 print_formatted(content=response_part["text"], color="dark_grey")
             elif response_part["type"] == "tool_use":
-                print_tool_message(tool_name=response_part["name"], tool_input=response_part["input"])
+                tool_calls.append(response_part)
+        ordered_calls = _order_tool_calls(tool_calls, "input")
+        for call in ordered_calls:
+            print_tool_message(tool_name=call["name"], tool_input=call["input"])
+
+
+def _order_tool_calls(tool_calls, args_key):
+    with_start_line = []
+    without_start_line = []
+    for call in tool_calls:
+        args = call.get(args_key, {})
+        if isinstance(args, dict) and "start_line" in args:
+            with_start_line.append(call)
+        else:
+            without_start_line.append(call)
+    with_start_line.sort(key=lambda c: c[args_key]["start_line"], reverse=True)
+    return with_start_line + without_start_line
 
 
 def print_formatted(content, width=None, color=None, on_color=None, bold=False, end="\n"):
