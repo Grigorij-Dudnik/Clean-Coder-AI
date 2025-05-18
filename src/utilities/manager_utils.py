@@ -108,6 +108,12 @@ def get_project_tasks_and_epics():
 
 
 def parse_project_tasks(tasks):
+    """
+    Build a markdown-style summary from Todoist task objects.
+
+    When no tasks exist, a placeholder sentence is returned so the caller
+    always receives a meaningful string.
+    """
     output_string = str()
     if tasks:
         output_string += "\n".join(
@@ -156,6 +162,7 @@ def actualize_progress_description_file(task_name_description):
 
 
 def read_progress_description():
+    """Reads and returns the current manager progress description from file."""
     file_path = os.path.join(work_dir, ".clean_coder", "manager_progress_description.txt")
     if not os.path.exists(file_path):
         open(file_path, "a").close()  # Creates file if it doesn't exist
@@ -167,6 +174,7 @@ def read_progress_description():
 
 
 def move_task(task_id, epic_id):
+    """Moves a Todoist task to a specified epic (section) by ID."""
     command = {"type": "item_move", "uuid": str(uuid.uuid4()), "args": {"id": task_id, "section_id": epic_id}}
     commands_json = json.dumps([command])
     requests.post(
@@ -313,6 +321,10 @@ def get_manager_messages(saved_messages_path):
 
 
 def actualize_tasks_list_and_progress_description(state):
+    """
+    Refresh the conversation state by inserting an up-to-date tasks /
+    progress message and removing the outdated one.
+    """
     # Remove old tasks message
     state["messages"] = [msg for msg in state["messages"] if not hasattr(msg, "tasks_and_progress_message")]
     # Add new message
@@ -329,6 +341,7 @@ def actualize_tasks_list_and_progress_description(state):
 
 
 def load_system_message():
+    """Loads and formats the system message for the manager agent."""
     system_prompt_template = load_prompt("manager_system")
 
     if os.path.exists(os.path.join(work_dir, ".clean_coder/project_plan.txt")):

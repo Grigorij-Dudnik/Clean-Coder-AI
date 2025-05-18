@@ -63,10 +63,41 @@ def call_model(state, llms, printing=True):
 
 
 def call_tool(state, tools):
+    """
+    Execute tool calls in a safe order:
+    1. Line-based modifications (`start_line` provided) are executed from the
+       greatest line number to the smallest, preventing index shifts.
+    2. All other calls are executed afterwards, preserving the model’s order.
+    """
     last_message = state["messages"][-1]
-    tool_response_messages = [invoke_tool_native(tool_call, tools) for tool_call in last_message.tool_calls]
+
+    ordered_calls = _sort_tool_calls(last_message.tool_calls)
+
+    tool_response_messages = [
+        invoke_tool_native(tool_call, tools) for tool_call in ordered_calls
+    ]
     state["messages"].extend(tool_response_messages)
     return state
+
+
+def _sort_tool_calls(tool_calls):
+    """
+    Return list of tool calls where calls containing `start_line`
+    are sorted descending by that value, followed by all remaining calls.
+    """
+    calls_with_start_line = [
+        call for call in tool_calls if "start_line" in call.get("args", {})
+    ]
+    other_calls = [
+        call for call in tool_calls if "start_line" not in call.get("args", {})
+    ]
+
+    # Largest start_line first
+    calls_with_start_line.sort(
+        key=lambda call: call["args"]["start_line"], reverse=True
+    )
+
+    return calls_with_start_line + other_calls
 
 
 def ask_human(state):
