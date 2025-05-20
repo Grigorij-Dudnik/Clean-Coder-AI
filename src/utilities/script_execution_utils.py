@@ -39,15 +39,16 @@ def create_script_execution_env(work_dir: str, silent: bool = True) -> str:
     return python_path
 
 
-def run_script_in_env(script_path: str, work_dir: str, silent_setup: bool = True) -> tuple[str, str]:
+def run_script_in_env(work_dir: str, execute_file_name: str, silent_setup: bool = True) -> tuple[str, str]:
     """Runs generated script in a virtual environment.
 
     Args:
-        script_path: Path to the script to execute
         work_dir: Working directory path
+        execute_file_name: Name of the file to execute
         silent_setup: If True, suppresses environment setup output
     """
     work_dir = os.path.abspath(work_dir)
+    script_path = join_paths(work_dir, execute_file_name)
     python_path = create_script_execution_env(work_dir, silent=silent_setup)
     req_file = join_paths(work_dir, "requirements.txt")
     
@@ -65,7 +66,6 @@ def run_script_in_env(script_path: str, work_dir: str, silent_setup: bool = True
                         check=True, stdout=stdout, stderr=stderr)
         except Exception:
             pass
-    
     try:
         result = subprocess.run([python_path, script_path], capture_output=True, text=True, check=True)
         return result.stdout, result.stderr
@@ -95,8 +95,7 @@ def logs_from_running_script(work_dir: str, execute_file_name: str, silent_setup
         silent_setup: If True, suppresses environment setup output
     """
     try:
-        script_path = join_paths(work_dir, execute_file_name)
-        stdout, stderr = run_script_in_env(script_path, work_dir, silent_setup=silent_setup)
+        stdout, stderr = run_script_in_env(work_dir, execute_file_name, silent_setup=silent_setup)
         return format_log_message(stdout=stdout, stderr=stderr)
     except subprocess.CalledProcessError as e:
         stdout = e.stdout if hasattr(e, "stdout") else ""

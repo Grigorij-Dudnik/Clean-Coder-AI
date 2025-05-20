@@ -71,6 +71,8 @@ class Debugger:
         self.images = convert_images(image_paths)
         self.human_feedback = human_feedback
         self.playwright_code = playwright_code
+        self.stdout = None
+        self.stderr = None
         # workflow definition
         debugger_workflow = StateGraph(AgentState)
         debugger_workflow.add_node("agent", self.call_model_debugger)
@@ -123,8 +125,9 @@ class Debugger:
                     state["messages"].append(HumanMessage(content=analysis_result))
                 if execute_file_name:
                     self.stdout, self.stderr = run_script_in_env(self.work_dir, execute_file_name, silent_setup=True)
+                    script_execution_message = format_log_message(self.stdout, self.stderr)
+                    print(script_execution_message)
                     if self.stderr:
-                        script_execution_message = format_log_message(self.stdout, self.stderr)
                         state["messages"].append(HumanMessage(content=script_execution_message))
 
         state = exchange_file_contents(state, self.files, self.work_dir)
