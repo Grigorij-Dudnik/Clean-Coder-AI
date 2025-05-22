@@ -40,9 +40,13 @@ class CoderIgnore:
 
     @staticmethod
     def read_coderignore():
-        coderignore_path = os.path.join(Work.dir(), ".clean_coder", ".coderignore")
-        with open(coderignore_path, "r") as file:
-            return [line.strip() for line in file if line.strip() and not line.startswith("#")]
+        coderignore_path = os.path.join(Work.dir(), '.clean_coder', '.coderignore')
+        try:
+            with open(coderignore_path, 'r') as file:
+                return [line.strip() for line in file if line.strip() and not line.startswith('#')]
+        except FileNotFoundError:
+            print(f"File .codeignore was not found in {coderignore_path}. No files will be ignored.")
+            return [] 
 
     @staticmethod
     def get_forbidden():
