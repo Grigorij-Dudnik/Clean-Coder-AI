@@ -10,3 +10,7 @@ venv/
 Pipfile.lock
 Pipfile
 .coverage
+
+pyproject.toml
+uv.lock
+.python-version
