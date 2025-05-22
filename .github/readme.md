@@ -74,7 +74,7 @@ Learn more about Clean Coder's idea [here](https://clean-coder.dev/faq/why_clean
 - Create a [frontend based on images](https://clean-coder.dev/features/working_with_images/) with designs.
 - [Speak to Clean Coder](https://clean-coder.dev/features/talk_to_cc/) instead of writing.
 - Automatic file linting prevents from introducing incorrect changes and [log check for self-debug](https://clean-coder.dev/advanced_features_installation/logs_check/).
-- [Sensitive files protection](https://clean-coder.dev/features/sensitive_file_protection/) from being watched by AI.
+- [Run Python scripts](https://clean-coder.dev/advanced_features_installation/python_scripts_run/) for self-debug.
 
 
 ## ⛓️‍💥 Something got broken?
