@@ -256,66 +256,60 @@ def ask_user_for_project_action():
     choices = [
         "Start/continue planning my project (Default)",
         "Project is fully planned in Todoist, just execute tasks",
-        "Describe project again",
+        "Re-describe project",
     ]
-    answer = questionary.select("Choose an option:", choices, style=QUESTIONARY_STYLE).ask()
-
-    if answer == "Start/continue planning my project (Default)":
-        return "start_planning"
-    elif answer == "Project is fully planned in Todoist, just execute tasks":
-        return "execute_tasks"
-    elif answer == "Describe project again":
-        return "redescribe_project"
+    return questionary.select("Choose an option:", choices, style=QUESTIONARY_STYLE).ask()
 
 
 def redescribe_project_plan():
     """
     Prompts the user for a new project plan and clears the progress description completely.
     """
-    from src.utilities.start_project_functions import create_project_plan_file
-    from src.utilities.util_functions import join_paths
-
-    work_dir = os.getenv("WORK_DIR")
+    # work_dir is already imported at module level
     create_project_plan_file(work_dir)
     with open(join_paths(work_dir, ".clean_coder", "manager_progress_description.txt"), "w") as f:
         f.write("<empty>")
 
+
 def get_manager_messages(saved_messages_path):
     """
-    Loads or initializes the manager's message history, adds the system message, and determines whether to enter planning mode or execution mode based on user input. Ensures do_planning is always defined before any conditional logic.
+    Build or restore Manager’s message history, allowing the user to
+    choose between planning, execution-only, or full re-description.
+    The file will be overwritten on the first save, so no deletion is
+    necessary.
     """
+
+    # ---------- default bootstrap messages ---------- #
     tasks = fetch_tasks()
+    default_msgs = [
+        HumanMessage(
+            content=tasks_progress_template.format(
+                tasks=parse_project_tasks(tasks),
+                progress_description=read_progress_description(),
+            ),
+            tasks_and_progress_message=True,
+        ),
+        HumanMessage(content=list_directory_tree(work_dir)),
+    ]
+
+    # ---------- load previous history if present ---------- #
     if os.path.exists(saved_messages_path):
-        # continue previous work
         with open(saved_messages_path, "r") as fp:
             messages = loads(json.load(fp))
     else:
-        # new start
-        project_tasks = parse_project_tasks(tasks)
-        progress_description = read_progress_description()
-        messages = [
-            HumanMessage(
-                content=tasks_progress_template.format(tasks=project_tasks, progress_description=progress_description),
-                tasks_and_progress_message=True,
-            ),
-            HumanMessage(content=list_directory_tree(work_dir)),
-        ]
+        messages = default_msgs
 
-    # Add system message as first one
-    messages = [load_system_message()] + messages
-
-    # Determine if planning is needed based on existing tasks
+    # ---------- decide next action ---------- #
     action = ask_user_for_project_action()
 
-    do_planning = True
-    if action == "execute_tasks":
-        do_planning = False
+    if action == "Project is fully planned in Todoist, just execute tasks":
         messages.append(HumanMessage(content="Tasks are fully planned. Continuing with execution."))
-    elif action == "redescribe_project":
+    elif action == "Re-describe project":
         redescribe_project_plan()
+        messages = default_msgs
 
-    if not do_planning:
-        messages.append(HumanMessage(content="Tasks are completely done and all you need to do is to execute them."))
+    # ---------- prepend fresh system message ---------- #
+    messages = [load_system_message()] + messages
 
     return messages
 

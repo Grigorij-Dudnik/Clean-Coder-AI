@@ -77,14 +77,12 @@ class Debugger:
         debugger_workflow = StateGraph(AgentState)
         debugger_workflow.add_node("agent", self.call_model_debugger)
         debugger_workflow.add_node("check_log", self.check_log)
-        debugger_workflow.add_node("frontend_screenshots", self.frontend_screenshots)
         debugger_workflow.add_node("human_help", agent_looped_human_help)
         debugger_workflow.add_node("human_end_process_confirmation", self.debugger_ask_human)
 
         debugger_workflow.set_entry_point("agent")
 
         debugger_workflow.add_edge("human_help", "agent")
-        debugger_workflow.add_edge("frontend_screenshots", "human_end_process_confirmation")
         debugger_workflow.add_conditional_edges("agent", self.after_agent_condition)
         debugger_workflow.add_conditional_edges("check_log", self.after_check_log_condition)
         debugger_workflow.add_conditional_edges("human_end_process_confirmation", after_ask_human_condition)
@@ -95,13 +93,13 @@ class Debugger:
     def call_model_debugger(self, state: dict) -> dict:
         state = call_model(state, self.llms)
         state = call_tool(state, self.tools)
-        messages = [msg for msg in state["messages"] if msg.type == "ai"]
-        last_ai_message = messages[-1]
-        if len(last_ai_message.tool_calls) > 1:
-            for tool_call in last_ai_message.tool_calls:
-                state["messages"].append(ToolMessage(content="too much tool calls", tool_call_id=tool_call["id"]))
-            state["messages"].append(HumanMessage(content=multiple_tools_msg))
-        elif len(last_ai_message.tool_calls) == 0:
+        ai_messages = [msg for msg in state["messages"] if msg.type == "ai"]
+        last_ai_message = ai_messages[-1]
+        # if len(last_ai_message.tool_calls) > 1:
+        #     for tool_call in last_ai_message.tool_calls:
+        #         state["messages"].append(ToolMessage(content="too much tool calls", tool_call_id=tool_call["id"]))
+        #     state["messages"].append(HumanMessage(content=multiple_tools_msg))
+        if len(last_ai_message.tool_calls) == 0:
             state["messages"].append(HumanMessage(content=no_tools_msg))
 
         for tool_call in last_ai_message.tool_calls:
@@ -127,8 +125,9 @@ class Debugger:
                     self.stdout, self.stderr = run_script_in_env(self.work_dir, execute_file_name, silent_setup=True)
                     script_execution_message = format_log_message(self.stdout, self.stderr)
                     print(script_execution_message)
-                    if self.stderr:
-                        state["messages"].append(HumanMessage(content=script_execution_message))
+                    state["messages"].append(HumanMessage(content=script_execution_message))
+                if self.playwright_code:
+                    state = self.frontend_screenshots(state)
 
         state = exchange_file_contents(state, self.files, self.work_dir)
         return state
@@ -153,16 +152,16 @@ class Debugger:
 
     # Conditional edge functions
     def after_agent_condition(self, state):
-        messages = [msg for msg in state["messages"] if msg.type in ["ai", "human"]]
-        last_message = messages[-1]
+        ai_messages = [msg for msg in state["messages"] if msg.type in ["ai"]]
+        last_ai_message = ai_messages[-1]
 
         if bad_tool_call_looped(state):
             return "human_help"
-        elif hasattr(last_message, "tool_calls") and last_message.tool_calls[0]["name"] == "final_response_debugger":
+        elif hasattr(last_ai_message, "tool_calls") and last_ai_message.tool_calls[0]["name"] == "final_response_debugger":
             if log_file_path:
                 return "check_log"
-            elif self.playwright_code:
-                return "frontend_screenshots"
+            if execute_file_name and self.stderr:
+                return "agent"
             else:
                 return "human_end_process_confirmation"
         else:
@@ -172,10 +171,7 @@ class Debugger:
         last_message = state["messages"][-1]
         
         if last_message.content.endswith("Logs are correct"):
-            if self.playwright_code:
-                return "frontend_screenshots"
-            else:
-                return "human_end_process_confirmation"
+            return "human_end_process_confirmation"
         else:
             return "agent"
 
