@@ -50,6 +50,7 @@ def check_file_contents(files, work_dir, line_numbers=True):
     Retrieves and formats the contents of multiple files with their filenames as headers.
     Can include line numbers in the output for easier reference when modifying code.
     """
+
     file_contents = f"Files shown: {[str(f) for f in files]}\n\n"
     for file_name in files:
         file_content = watch_file(file_name.filename, work_dir, line_numbers)
@@ -59,6 +60,7 @@ def check_file_contents(files, work_dir, line_numbers=True):
 
 
 def watch_file(filename, work_dir, line_numbers=True):
+    """Read and format a single file's content with optional line numbers."""
     if file_folder_ignored(filename):
         return "You are not allowed to work with this file."
     try:
@@ -91,12 +93,14 @@ def check_application_logs():
 
 
 def encode_image(filename, work_dir):
+    """Encode an image file to base64 string."""
     with open(join_paths(work_dir, filename), "rb") as image_file:
         img_encoded = base64.b64encode(image_file.read()).decode("utf-8")
     return img_encoded
 
 
 def convert_images(image_paths):
+    """Convert multiple image paths to format suitable for AI models."""
     images = []
     for image_path in image_paths:
         images.extend(convert_image(image_path))
@@ -105,6 +109,7 @@ def convert_images(image_paths):
 
 
 def convert_image(image_path):
+    """Convert a single image path to format suitable for AI models."""
     if not os.path.exists(join_paths(work_dir, image_path)):
         print_formatted(f"Image not exists: {image_path}", color="yellow")
         return
@@ -128,6 +133,7 @@ def join_paths(*args):
 
 
 def get_joke():
+    """Fetch a programming joke from an external API."""
     try:
         response = requests.get("https://v2.jokeapi.dev/joke/Programming?type=single")
         # response = requests.get("https://uselessfacts.jsph.pl/api/v2/facts/random")
@@ -138,6 +144,10 @@ def get_joke():
 
 
 def list_directory_tree(work_dir):
+    """
+    Generate a visual tree representation of the directory structure.
+    Filters out ignored files and folders, and handles large directories gracefully.
+    """
     tree = []
     # Normalize path to ensure it always ends with a slash in one line
     work_dir = work_dir + os.sep if not work_dir.endswith(os.sep) else work_dir
@@ -176,6 +186,7 @@ def list_directory_tree(work_dir):
 
 
 def invoke_tool_native(tool_call, tools):
+    """Execute a tool call and return the result as a ToolMessage."""
     # convert string to real function
     tool_name_to_tool = {tool.name: tool for tool in tools}
     name = tool_call["name"]

@@ -36,10 +36,10 @@ def llm_open_local_hosted(model):
 def init_llms_medium_intelligence(tools=None, run_name="Clean Coder", temp=0):
     llms = []
     if getenv("ANTHROPIC_API_KEY"):
-        llms.append(ChatAnthropic(model="claude-3-5-sonnet-latest", temperature=temp, timeout=90))
+        llms.append(ChatAnthropic(model="claude-sonnet-4-20250514", temperature=temp, timeout=90))
 
     if getenv("OPENROUTER_API_KEY"):
-        llms.append(llm_open_router("anthropic/claude-3.5-sonnet"))
+        llms.append(llm_open_router("anthropic/claude-4-sonnet"))
     if getenv("OPENAI_API_KEY"):
         llms.append(ChatOpenAI(model="gpt-4.1", temperature=temp, timeout=90))
 
@@ -78,9 +78,9 @@ def init_llms_mini(tools=None, run_name="Clean Coder", temp=0):
 def init_llms_high_intelligence(tools=None, run_name="Clean Coder", temp=0.2):
     llms = []
     if os.getenv("ANTHROPIC_API_KEY"):
-        llms.append(ChatAnthropic(model="claude-3-7-sonnet-latest", temperature=temp, timeout=90))
+        llms.append(ChatAnthropic(model="claude-opus-4-20250514", temperature=temp, timeout=90))
     if getenv("OPENROUTER_API_KEY"):
-        llms.append(llm_open_router("anthropic/claude-3.7-sonnet"))
+        llms.append(llm_open_router("anthropic/claude-4-opus"))
     if os.getenv("OPENAI_API_KEY"):
         llms.append(ChatOpenAI(model="o3", temperature=1, timeout=90, reasoning_effort="high"))
     if os.getenv("OPENAI_API_KEY"):

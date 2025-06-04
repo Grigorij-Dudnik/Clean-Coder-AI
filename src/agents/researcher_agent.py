@@ -129,6 +129,7 @@ class Researcher:
             return "human"
         else:
             return "agent"
+
     # just functions
     def _start_from_previous_research(self, system_message):
         """
