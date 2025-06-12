@@ -159,6 +159,7 @@ class Manager:
         return manager_workflow.compile()
 
     def run(self):
+        """Start the Manager agent to plan and manage project tasks interactively."""
         print_formatted("😀 Hello! I'm Manager agent. Let's plan your project together!", color="green")
         
         messages = get_manager_messages(self.saved_messages_path)

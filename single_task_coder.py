@@ -31,6 +31,7 @@ execute_file_name = os.getenv("EXECUTE_FILE_NAME")
 
 
 def run_clean_coder_pipeline(task: str, work_dir: str, task_id: str=None):
+    """Execute the complete Clean Coder pipeline including research, planning, execution, and debugging phases."""
     researcher = Researcher(task_id=task_id)
     files, image_paths = researcher.research_task(task)
 

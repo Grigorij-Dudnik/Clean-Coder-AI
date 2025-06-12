@@ -207,6 +207,9 @@ def upload_descriptions_to_vdb():
                 # Clear the batch lists
                 docs = []
                 ids = []
+    # avoid upserting if no docs here (empty folder)
+    if not docs:
+        return
     # upsert remaining docs
     collection.upsert(documents=docs, ids=ids)
 
@@ -232,6 +235,10 @@ def upsert_file_list(file_list):
             file_path = Path(file_path)
             docs.append(content)
             ids.append(file_path.name.replace("=", "/").removesuffix(".txt"))
+
+        # avoid upserting if no docs here (no files changed)
+        if not docs:
+            return
     collection.upsert(documents=docs, ids=ids)
     print_formatted("Re-indexing of modified files completed.", color="green")
 

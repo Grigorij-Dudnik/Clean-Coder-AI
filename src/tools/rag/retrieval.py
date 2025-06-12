@@ -1,5 +1,6 @@
 import os
 import chromadb
+from chromadb.errors import NotFoundError
 from pathlib import Path
 from dotenv import load_dotenv, find_dotenv
 from src.utilities.llms import init_llms_mini
@@ -42,7 +43,7 @@ def get_collection():
     # )
     try:
         return chroma_client.get_collection(name=collection_name)  # , embedding_function=embedding_function)
-    except ValueError:
+    except NotFoundError:
         return False
 
 
