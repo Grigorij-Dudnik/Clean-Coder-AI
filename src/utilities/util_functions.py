@@ -197,6 +197,7 @@ def invoke_tool_native(tool_call, tools):
 
 
 def exchange_file_contents(state, files, work_dir):
+    """Update state messages by replacing old file contents with current file contents."""
     # Remove old one
     state["messages"] = [msg for msg in state["messages"] if not hasattr(msg, "contains_file_contents")]
     # Add new file contents
@@ -225,6 +226,7 @@ def bad_tool_call_looped(state):
 
 
 def create_frontend_feedback_story():
+    """Create and open a frontend feedback story template file for user configuration."""
     frontend_feedback_story_path = os.path.join(Work.dir(), ".clean_coder", "frontend_feedback_story.txt")
     if not os.path.exists(frontend_feedback_story_path):
         with open(frontend_feedback_story_path, "w") as file:
