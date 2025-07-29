@@ -20,11 +20,10 @@ def set_up_env_coder_pipeline():
             color="cyan",
         )
     )
-    envs["ANTHROPIC_API_KEY"] = input("Provide your Anthropic API key (Optional) (Why? Best coding capabilities):\n")
+    envs["OPEN_ROUTER_API_KEY"] = input("Provide your OpenRouter API key:\n")
     envs["OPENAI_API_KEY"] = input(
-        "Provide your OpenAI API key (Optional) (Why? Needed for using microphone, best planning capabilities with o1):\n"
+        "Provide your OpenAI API key (Optional) (Needed for microphone use):\n"
     )
-    envs["OPEN_ROUTER_API_KEY"] = input("Provide your OpenRouter API key (Optional) (Why? All models in one place):\n")
     print(colored("2/3. Now provide the folder containing your project.", color="cyan"))
     envs["WORK_DIR"] = input("Provide full path to your work directory:\n")
     print(colored("3/3. (Optional) If you want to use frontend feedback feature:", color="cyan"))
@@ -54,11 +53,10 @@ def set_up_env_manager():
             color="cyan",
         )
     )
-    envs["ANTHROPIC_API_KEY"] = input("Provide your Anthropic API key (Optional) (Why? Best coding capabilities):\n")
+    envs["OPEN_ROUTER_API_KEY"] = input("Provide your OpenRouter API key:\n")
     envs["OPENAI_API_KEY"] = input(
-        "Provide your OpenAI API key (Optional) (Why? Needed for using microphone, best planning capabilities with o1):\n"
+        "Provide your OpenAI API key (Optional) (Needed for microphone use):\n"
     )
-    envs["OPEN_ROUTER_API_KEY"] = input("Provide your OpenRouter API key (Optional) (Why? All models in one place):\n")
     print(colored("2/4. Now provide the folder containing your project.", color="cyan"))
     envs["WORK_DIR"] = input("Provide full path to your work directory:\n")
     print(colored("3/4. (Optional) If you want to use frontend feedback feature:", color="cyan"))

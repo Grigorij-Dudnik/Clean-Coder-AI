@@ -113,6 +113,9 @@ def convert_image(image_path):
     if not os.path.exists(join_paths(work_dir, image_path)):
         print_formatted(f"Image not exists: {image_path}", color="yellow")
         return
+    if image_path.split(".")[-1] not in ["png", "jpeg", "gif", "webp"]:
+        print_formatted(f"Image format not supported: {image_path}", color="yellow")
+        return
     return [
             {"type": "text", "text": f"I###\n{image_path}"},
             {

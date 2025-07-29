@@ -329,8 +329,16 @@ def actualize_tasks_list_and_progress_description(state):
         content=tasks_progress_template.format(tasks=project_tasks, progress_description=progress_description),
         tasks_and_progress_message=True,
     )
-    # insert tasks message near the end of conversation to ensure AI task list is most actual
-    state["messages"].insert(-2, tasks_and_progress_msg)
+    # Find the index of the last AI message with tool calls to insert the task list before it.
+    # Default to inserting before the last message if no such AI message is found.
+    insertion_index = -1
+    for i in range(len(state["messages"]) - 1, -1, -1):
+        msg = state["messages"][i]
+        if msg.type == "ai" and getattr(msg, "tool_calls", None):
+            insertion_index = i
+            break
+    
+    state["messages"].insert(insertion_index, tasks_and_progress_msg)
     return state
 
 
