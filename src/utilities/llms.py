@@ -37,6 +37,8 @@ def init_llms_medium_intelligence(tools=None, run_name="Clean Coder", temp=0):
     llms = []
     if getenv("OPENROUTER_API_KEY"):
         llms.append(llm_open_router("anthropic/claude-sonnet-4"))
+    if getenv("OPENROUTER_API_KEY"):
+        llms.append(llm_open_router("openai/gpt-4.1"))
 
     if getenv("OLLAMA_MODEL"):
         llms.append(ChatOllama(model=os.getenv("OLLAMA_MODEL")))
@@ -78,9 +80,9 @@ def init_llms_mini(tools=None, run_name="Clean Coder", temp=0):
 def init_llms_high_intelligence(tools=None, run_name="Clean Coder", temp=0.2):
     llms = []
     if getenv("OPENROUTER_API_KEY"):
-        llms.append(llm_open_router("google/gemini-2.5-pro"))
-    if getenv("OPENROUTER_API_KEY"):
         llms.append(llm_open_router("anthropic/claude-opus-4"))
+    if getenv("OPENROUTER_API_KEY"):
+        llms.append(llm_open_router("google/gemini-2.5-pro"))
 
     if os.getenv("OLLAMA_MODEL"):
         llms.append(ChatOllama(model=os.getenv("OLLAMA_MODEL")))
