@@ -1,6 +1,7 @@
 import os
 import chromadb
 from chromadb.errors import NotFoundError
+from chromadb.config import Settings
 from pathlib import Path
 from dotenv import load_dotenv, find_dotenv
 from src.utilities.llms import init_llms_mini
@@ -35,7 +36,7 @@ class BinaryRankingResult(BaseModel):
 
 
 def get_collection():
-    chroma_client = chromadb.PersistentClient(path=os.getenv("WORK_DIR") + "/.clean_coder/chroma_base")
+    chroma_client = chromadb.PersistentClient(path=os.getenv("WORK_DIR") + "/.clean_coder/chroma_base", settings=Settings(anonymized_telemetry=False))
     from chromadb.utils import embedding_functions
 
     # embedding_function = embedding_functions.OpenAIEmbeddingFunction(
